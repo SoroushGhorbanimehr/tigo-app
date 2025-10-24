@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main
@@ -84,10 +86,52 @@ export default function Home() {
           style={{
             fontSize: "clamp(16px, 2.5vw, 22px)",
             opacity: 0.92,
+            marginBottom: "1.25rem",
           }}
         >
-          Coming Soon!
+          Choose your role to continue.
         </p>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
+          <Link
+            href="/trainee"
+            style={{
+              padding: "0.9rem 1.4rem",
+              borderRadius: "10px",
+              fontWeight: 700,
+              textDecoration: "none",
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+            }}
+          >
+            I am a Trainee
+          </Link>
+
+          <Link
+            href="/trainer"
+            style={{
+              padding: "0.9rem 1.4rem",
+              borderRadius: "10px",
+              fontWeight: 700,
+              textDecoration: "none",
+              background: "rgba(255,255,255,0.08)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              backdropFilter: "blur(4px)",
+              WebkitBackdropFilter: "blur(4px)",
+            }}
+          >
+            I am a Trainer
+          </Link>
+        </div>
       </section>
     </main>
   );
