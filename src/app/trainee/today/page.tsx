@@ -101,7 +101,7 @@ export default function TodayPage() {
         {/* Today program & meal */}
         <div style={{ display: "grid", gap: 12 }}>
           <section className="t-card">
-            <h3>Today's Program</h3>
+            <h3>Todays Program</h3>
             <ul className="t-list">
               <li>Warm-up: 10 min incline walk</li>
               <li>Bench press 4×8</li>
@@ -112,7 +112,7 @@ export default function TodayPage() {
           </section>
 
           <section className="t-card">
-            <h3>Today's Meal</h3>
+            <h3>Todays Meal</h3>
             <ul className="t-list">
               <li>08:00 – Greek yogurt + whey + berries</li>
               <li>12:30 – Chicken breast, rice, salad</li>
