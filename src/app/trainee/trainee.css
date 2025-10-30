@@ -1,0 +1,180 @@
+/* app/trainee/trainee.css */
+
+/* CSS reset-ish bits for predictable layout */
+:root {
+  --bg: #0d0f13;
+  --card: #131722;
+  --cardBorder: #1f2430;
+  --text: #ffffff;
+  --muted: #9aa3b2;
+  --accent: #4c84ff;
+  --success: #36d399;
+}
+
+/* Shell */
+.t-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 1fr auto; /* content + bottom nav */
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Content wrapper centers at larger sizes */
+.t-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px;            /* mobile default */
+}
+
+@media (min-width: 600px) {
+  .t-container { padding: 16px; } /* tablets */
+}
+@media (min-width: 1024px) {
+  .t-container { padding: 20px; } /* laptops */
+}
+
+/* Bottom nav */
+.t-bottomnav {
+  position: sticky;
+  bottom: 0;
+  backdrop-filter: blur(6px);
+  background: rgba(13, 15, 19, 0.7);
+  border-top: 1px solid var(--cardBorder);
+}
+
+.t-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.t-tab {
+  padding: 12px 8px;            /* mobile */
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-align: center;
+  color: var(--muted);
+  position: relative;
+  text-decoration: none;
+  display: block;
+}
+
+.t-tab[aria-current="page"] { color: var(--text); }
+
+.t-tab::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 6px;
+  height: 2px;
+  background: transparent;
+  border-radius: 2px;
+  transition: background 160ms ease;
+}
+.t-tab[aria-current="page"]::after { background: var(--accent); }
+
+@media (min-width: 600px) {
+  .t-tab { padding: 14px 10px; } /* tablets */
+}
+@media (min-width: 1024px) {
+  .t-tab { padding: 16px 12px; } /* laptops */
+}
+
+/* Header */
+.t-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.t-title {
+  font-weight: 800;
+  font-size: clamp(22px, 2.4vw, 28px);
+}
+
+/* Card */
+.t-card {
+  background: var(--card);
+  border: 1px solid var(--cardBorder);
+  border-radius: 14px;
+  padding: 16px;
+}
+.t-card h3 {
+  margin: 0 0 8px 0;
+  font-weight: 800;
+}
+
+/* Today grid (calendar + right column) */
+.t-today-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;      /* mobile: 1 column */
+}
+@media (min-width: 900px) {
+  .t-today-grid {
+    grid-template-columns: 1.1fr 1fr; /* tablet/laptop: 2 columns */
+  }
+}
+
+/* Calendar */
+.t-cal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.t-cal-navbtn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--cardBorder);
+  background: #0f1420;
+  color: #e6ebff;
+  cursor: pointer;
+}
+.t-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.t-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.t-cal-day {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  border: 1px solid var(--cardBorder);
+  background: #111520;
+  color: var(--text);
+  position: relative;
+  font-weight: 500;
+}
+.t-cal-day--out { color: #7b8499; }
+.t-cal-day--sel {
+  border-color: var(--accent);
+  background: #1a2133;
+  font-weight: 700;
+}
+.t-cal-dot {
+  position: absolute;
+  right: 6px; top: 6px;
+  width: 6px; height: 6px;
+  border-radius: 6px;
+  background: var(--success);
+}
+
+/* Lists inside cards */
+.t-list { margin: 0; padding-left: 18px; }
+
+/* Accessibility / motion */
+@media (prefers-reduced-motion: reduce) {
+  .t-tab::after { transition: none; }
+}
