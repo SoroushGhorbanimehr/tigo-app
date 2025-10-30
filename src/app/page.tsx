@@ -11,7 +11,7 @@ export default function Home() {
       setShowSplash(false);
       // Allow the DOM to swap from splash to main, then fade in
       setTimeout(() => setRevealed(true), 30);
-    }, 5000);
+    }, 2500); // Show splash for 2.5 seconds
     return () => clearTimeout(timer);
   }, []);
 
