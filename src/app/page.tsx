@@ -1,6 +1,53 @@
+"use client";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+      // Allow the DOM to swap from splash to main, then fade in
+      setTimeout(() => setRevealed(true), 30);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          backgroundColor: "black",
+          transition: "opacity 1s ease",
+        }}
+      >
+        <img
+          src="/coach_logo.png"
+          alt="Coach Tigo Logo"
+          style={{
+            width: "min(70%, 320px)",
+            height: "auto",
+            opacity: 0.95,
+            animation: "fadeOut 1s ease-out 4s forwards",
+          }}
+        />
+        <style jsx>{`
+          @keyframes fadeOut {
+            to {
+              opacity: 0;
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <main
       style={{
@@ -10,6 +57,8 @@ export default function Home() {
         color: "#ffffff",
         fontFamily:
           "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+        opacity: revealed ? 1 : 0,
+        transition: "opacity 600ms ease",
       }}
     >
       {/* Background video */}
@@ -18,7 +67,6 @@ export default function Home() {
         loop
         muted
         playsInline
-        poster="/TIGO_logo.png"
         style={{
           position: "absolute",
           inset: 0,
@@ -59,7 +107,7 @@ export default function Home() {
         }}
       >
         <img
-          src="/TIGO_logo.png"
+          src="/coach_logo.png"
           alt="Coach Tigo Logo"
           style={{
             width: "min(60%, 280px)",
