@@ -149,7 +149,7 @@ export default function Home() {
           }}
         >
           <Link
-            href="/trainee"
+            href="/trainee/login"   // 👈 changed from "/trainee"
             style={{
               padding: "0.9rem 1.4rem",
               borderRadius: "10px",
@@ -165,7 +165,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/trainer"
+            href="/trainer/login"   // 👈 changed from "/trainer"
             style={{
               padding: "0.9rem 1.4rem",
               borderRadius: "10px",
