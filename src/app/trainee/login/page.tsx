@@ -13,7 +13,8 @@ export default function TraineeLogin() {
     e.preventDefault();
 
     if (username === "soroush" && password === "soroush") {
-        router.push("/trainee/today");   // ✅ go to the dashboard
+      // IMPORTANT: use the same ID as in mockTrainees
+      router.push("/trainee/today?tid=trainee1");
     } else {
       setError("Invalid username or password");
     }

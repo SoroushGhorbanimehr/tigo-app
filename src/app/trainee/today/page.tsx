@@ -3,16 +3,30 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { getNotesForTrainee, setNotesForTrainee } from "@/lib/traineeStore";
 
 function toISODate(d: Date) { return d.toISOString().slice(0, 10); }
 
 export default function TodayPage() {
   const today = useMemo(() => new Date(), []);
 
+  const searchParams = useSearchParams();
+  const traineeId = searchParams.get("tid") ?? "self"; // "self" for normal trainee use
+
   // Calendar state
-  const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const [cursor, setCursor] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d;
+  });
+
   const [selected, setSelected] = useState<string>(toISODate(today));
-  const [coachNotes, setCoachNotes] = useState<Record<string, string>>({});
+
+  const [coachNotes, setCoachNotes] = useState<Record<string, string>>(
+    () => getNotesForTrainee(traineeId)
+  );
+
 
   const monthLabel = cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
@@ -80,21 +94,25 @@ export default function TodayPage() {
             <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 6 }}>
               Coach plan for <strong>{selected}</strong>
             </div>
-            <textarea
-              value={coachNotes[selected] ?? ""}
-              onChange={(e) => setCoachNotes({ ...coachNotes, [selected]: e.target.value })}
-              placeholder="Notes, reminders, links…"
-              rows={4}
-              style={{
-                width: "100%",
-                background: "#0f1420",
-                color: "#fff",
-                border: "1px solid var(--cardBorder)",
-                borderRadius: 10,
-                padding: 10,
-                resize: "vertical",
-              }}
-            />
+                <textarea
+                  value={coachNotes[selected] ?? ""}
+                  onChange={(e) => {
+                    const updated = { ...coachNotes, [selected]: e.target.value };
+                    setCoachNotes(updated);
+                    setNotesForTrainee(traineeId, updated); // 🔥 save to shared store
+                  }}
+                  placeholder="Notes, reminders, links…"
+                  rows={4}
+                  style={{
+                    width: "100%",
+                    background: "#0f1420",
+                    color: "#fff",
+                    border: "1px solid var(--cardBorder)",
+                    borderRadius: 10,
+                    padding: 10,
+                    resize: "vertical",
+                  }}
+                />
           </div>
         </div>
 

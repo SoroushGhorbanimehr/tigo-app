@@ -26,7 +26,12 @@ const mockPrograms: Program[] = [
 ];
 
 const mockTrainees: Trainee[] = [
-  { id: "t1", name: "Alex Johnson", goal: "Lose 5kg & improve cardio", lastCheckIn: "2025-10-22" },
+  {
+    id: "trainee1", // 👈 IMPORTANT: this will be your shared ID
+    name: "Soroush", // or "Mohammad Soroush", or "Coach Tigo (Self)"
+    goal: "Lose 5kg & improve cardio",
+    lastCheckIn: "2025-10-22",
+  },
   { id: "t2", name: "Maria Lopez", goal: "Build glutes & core", lastCheckIn: "2025-10-20" },
   { id: "t3", name: "Iman Z.", goal: "Stronger bench press (100kg)", lastCheckIn: "—" },
 ];
@@ -251,19 +256,20 @@ function TraineesPanel({ items }: { items: Trainee[] }) {
                 <Td>{t.goal}</Td>
                 <Td>{t.lastCheckIn ?? "—"}</Td>
                 <Td>
-                  <button
-                    style={{
-                      padding: ".45rem .75rem",
-                      borderRadius: "10px",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      background: "rgba(255,255,255,0.08)",
-                      cursor: "pointer",
-                      marginRight: ".5rem",
-                    }}
-                    onClick={() => alert(`Open ${t.name}`)}
-                  >
-                    View
-                  </button>
+                    <Link
+                      href={`/trainee/today?tid=${t.id}`}
+                      style={{
+                        padding: ".45rem .75rem",
+                        borderRadius: "10px",
+                        border: "1px solid rgba(255,255,255,0.25)",
+                        background: "rgba(255,255,255,0.08)",
+                        cursor: "pointer",
+                        marginRight: ".5rem",
+                        display: "inline-block",
+                      }}
+                    >
+                      View
+                    </Link>
                   <button
                     style={{
                       padding: ".45rem .75rem",
