@@ -11,6 +11,7 @@ type Program = {
 
 type Trainee = {
   id: string;
+
   name: string;
   goal: string;
   lastCheckIn?: string;
