@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function TraineeLogin() {
+export default function TrainerLogin() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -12,8 +12,8 @@ export default function TraineeLogin() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username === "trainee1" && password === "trainee1") {
-      router.push("/trainee");
+    if (username === "tigo" && password === "tigo") {
+      router.push("/trainer");
     } else {
       setError("Invalid username or password");
     }
@@ -21,7 +21,7 @@ export default function TraineeLogin() {
 
   return (
     <div className="flex flex-col items-center mt-20">
-      <h1 className="text-2xl font-bold mb-4">Trainee Login</h1>
+      <h1 className="text-2xl font-bold mb-4">Trainer Login</h1>
 
       <form onSubmit={handleLogin} className="flex flex-col w-64 gap-3">
         <input
@@ -40,7 +40,7 @@ export default function TraineeLogin() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="bg-blue-600 text-white py-2 rounded">
+        <button className="bg-green-600 text-white py-2 rounded">
           Login
         </button>
 
