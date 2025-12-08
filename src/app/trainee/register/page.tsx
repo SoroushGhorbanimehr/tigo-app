@@ -22,9 +22,14 @@ export default function TraineeRegisterPage() {
       const trainee = await registerTrainee(fullName.trim(), email.trim());
       // After registration, send them to their Today dashboard
       router.push(`/trainee/today?tid=${trainee.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus("error");
-      setErrorMsg(err?.message || "Failed to register trainee");
+
+      if (err instanceof Error) {
+        setErrorMsg(err.message || "Failed to register trainee");
+      } else {
+        setErrorMsg("Failed to register trainee");
+      }
     } finally {
       setStatus("idle");
     }
