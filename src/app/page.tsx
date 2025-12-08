@@ -77,7 +77,7 @@ export default function Home() {
           filter: "brightness(0.7) saturate(1.1)",
         }}
       >
-        <source src="tigo_vid.mp4" type="video/mp4" />
+        <source src="tigo_intro.mp4" type="video/mp4" />
         {/* Fallback if video can't play */}
       </video>
 
