@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getNotesForTrainee, setNotesForTrainee } from "@/lib/traineeStore";
+import { getNotesForTrainee, setNotesForTrainee } from "@/lib/traineeNotesRepo";
 
 function toISODate(d: Date) { return d.toISOString().slice(0, 10); }
 

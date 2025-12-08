@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
 
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
@@ -78,7 +80,7 @@ export default function Home() {
         }}
       >
         <source src="tigo_intro.mp4" type="video/mp4" />
-        {/* Fallback if video can't play */}
+        {/* Fallback dif video can't play */}
       </video>
 
       {/* Dark gradient overlay for readability */}
