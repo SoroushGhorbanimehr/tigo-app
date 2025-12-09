@@ -1,52 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import type { Trainee } from "@/lib/traineeRepo";
 
-export default function TraineeLogin() {
+export default function TraineeLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setStatus("submitting");
+    setErrorMsg("");
 
-    if (username === "soroush" && password === "soroush") {
-      // IMPORTANT: use the same ID as in mockTrainees
-      router.push("/trainee/today?tid=trainee1");
-    } else {
-      setError("Invalid username or password");
+    try {
+      const { data, error } = await supabase
+        .from("trainees")
+        .select("*")
+        .eq("email", email.trim())
+        .eq("password", password.trim())
+        .maybeSingle();
+
+      if (error) {
+        console.error("Trainee login error", error);
+        throw error;
+      }
+      if (!data) {
+        setStatus("error");
+        setErrorMsg("Invalid email or password");
+        return;
+      }
+
+      const trainee = data as Trainee;
+      router.push(`/trainee/today?tid=${trainee.id}`);
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg("Login failed");
+    } finally {
+      setStatus((prev) => (prev === "submitting" ? "idle" : prev));
     }
-  };
+  }
 
   return (
-    <div className="flex flex-col items-center mt-20">
-      <h1 className="text-2xl font-bold mb-4">Trainee Login</h1>
+    <div className="t-root">
+      <header className="t-header">
+        <h1 className="t-title">Trainee Login</h1>
+      </header>
 
-      <form onSubmit={handleLogin} className="flex flex-col w-64 gap-3">
-        <input
-          type="text"
-          placeholder="Username"
-          className="border px-3 py-2 rounded"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+      <div className="t-card" style={{ maxWidth: 420, margin: "0 auto" }}>
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>Email</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                border: "1px solid var(--cardBorder)",
+                background: "#0f1420",
+                color: "#fff",
+              }}
+            />
+          </label>
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="border px-3 py-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                border: "1px solid var(--cardBorder)",
+                background: "#0f1420",
+                color: "#fff",
+              }}
+            />
+          </label>
 
-        <button className="bg-blue-600 text-white py-2 rounded">
-          Login
-        </button>
+          <button
+            type="submit"
+            disabled={status === "submitting"}
+            style={{
+              marginTop: 8,
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--cardBorder)",
+              background: "#1f2937",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            {status === "submitting" ? "Logging in…" : "Login"}
+          </button>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-      </form>
+          {status === "error" && (
+            <p style={{ color: "#f97373", fontSize: 13 }}>{errorMsg}</p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

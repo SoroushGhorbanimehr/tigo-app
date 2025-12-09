@@ -5,15 +5,23 @@ export type Trainee = {
   id: string;
   full_name: string;
   email: string | null;
-  created_at: string;
+  password: string | null;
+  created_at?: string;
 };
 
-// Register a new trainee
-export async function registerTrainee(fullName: string, email?: string) {
+export async function registerTrainee(
+  fullName: string,
+  email: string,
+  password: string
+): Promise<Trainee> {
   const { data, error } = await supabase
     .from("trainees")
-    .insert({ full_name: fullName, email: email || null })
-    .select("id, full_name, email, created_at")
+    .insert({
+      full_name: fullName,
+      email: email || null,
+      password,
+    })
+    .select("*")
     .single();
 
   if (error) {
@@ -24,7 +32,7 @@ export async function registerTrainee(fullName: string, email?: string) {
   return data as Trainee;
 }
 
-// List all trainees (for trainer dashboard)
+// ✅ List all trainees (for trainer dashboard)
 export async function listTrainees(): Promise<Trainee[]> {
   const { data, error } = await supabase
     .from("trainees")

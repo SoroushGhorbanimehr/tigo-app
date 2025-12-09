@@ -1,51 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function TrainerLogin() {
+const TRAINER_USER = "tigo";
+const TRAINER_PASS = "coach123";
+
+export default function TrainerLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
-
-    if (username === "tigo" && password === "tigo") {
-      router.push("/trainer");
+    if (user === TRAINER_USER && pass === TRAINER_PASS) {
+      router.push("/trainer/clients");
     } else {
-      setError("Invalid username or password");
+      setErrorMsg("Invalid credentials");
     }
-  };
+  }
 
   return (
-    <div className="flex flex-col items-center mt-20">
-      <h1 className="text-2xl font-bold mb-4">Trainer Login</h1>
+    <div className="t-root">
+      <header className="t-header">
+        <h1 className="t-title">Trainer Login</h1>
+      </header>
 
-      <form onSubmit={handleLogin} className="flex flex-col w-64 gap-3">
-        <input
-          type="text"
-          placeholder="Username"
-          className="border px-3 py-2 rounded"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+      <div className="t-card" style={{ maxWidth: 420, margin: "0 auto" }}>
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>Username</span>
+            <input
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                border: "1px solid var(--cardBorder)",
+                background: "#0f1420",
+                color: "#fff",
+              }}
+            />
+          </label>
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="border px-3 py-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <label style={{ display: "grid", gap: 4 }}>
+            <span>Password</span>
+            <input
+              type="password"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              style={{
+                padding: 8,
+                borderRadius: 8,
+                border: "1px solid var(--cardBorder)",
+                background: "#0f1420",
+                color: "#fff",
+              }}
+            />
+          </label>
 
-        <button className="bg-green-600 text-white py-2 rounded">
-          Login
-        </button>
+          <button
+            type="submit"
+            style={{
+              marginTop: 8,
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--cardBorder)",
+              background: "#1f2937",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Login
+          </button>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-      </form>
+          {errorMsg && (
+            <p style={{ color: "#f97373", fontSize: 13 }}>{errorMsg}</p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }
