@@ -150,7 +150,8 @@ export default function Home() {
           }}
         >
           <Link
-            href="/trainee/login"   // 👈 changed from "/trainee"
+            href="/trainee"   // 👈 changed from "/trainee"
+            className="t-role-card"
             style={{
               padding: "0.9rem 1.4rem",
               borderRadius: "10px",

@@ -1,7 +1,8 @@
+// src/app/trainer/clients/page.tsx
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { listTrainees, Trainee } from "@/lib/traineeRepo";
 
 export default function TrainerClientsPage() {
@@ -10,13 +11,18 @@ export default function TrainerClientsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+
+    async function load() {
+      setLoading(true);
       const data = await listTrainees();
       if (!cancelled) {
         setTrainees(data);
         setLoading(false);
       }
-    })();
+    }
+
+    load();
+
     return () => {
       cancelled = true;
     };
@@ -25,48 +31,87 @@ export default function TrainerClientsPage() {
   return (
     <div className="t-root">
       <header className="t-header">
-        <h1 className="t-title">Coach Tigo – Clients</h1>
-        <Link href="/" style={{ textDecoration: "underline", opacity: 0.9 }}>
-          ← Home
+        <h1 className="t-title">Coach TIGO – Trainees</h1>
+        <Link
+          href="/"
+          style={{ textDecoration: "underline", opacity: 0.9 }}
+        >
+          ← Back to entrance
         </Link>
       </header>
 
-      <div className="t-card" style={{ maxWidth: 640, margin: "0 auto" }}>
+      <div className="t-card" style={{ overflowX: "auto" }}>
         {loading ? (
-          <p>Loading trainees…</p>
+          <p style={{ fontSize: 14, opacity: 0.9 }}>Loading trainees…</p>
         ) : trainees.length === 0 ? (
-          <p>No trainees yet. Ask them to register from /trainee/register.</p>
+          <p style={{ fontSize: 14, opacity: 0.9 }}>
+            No trainees registered yet.
+          </p>
         ) : (
-          <ul className="t-list">
-            {trainees.map((t) => (
-              <li
-                key={t.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <div>
-                  <div>{t.full_name}</div>
-                  {t.email && (
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>{t.email}</div>
-                  )}
-                </div>
-                <Link
-                  href={`/trainee/today?tid=${t.id}`}
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: 14,
+            }}
+          >
+            <thead>
+              <tr>
+                <th
                   style={{
-                    fontSize: 14,
-                    textDecoration: "underline",
-                    opacity: 0.9,
+                    textAlign: "left",
+                    padding: "8px 4px",
+                    borderBottom: "1px solid var(--cardBorder)",
                   }}
                 >
-                  Open dashboard →
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  Name
+                </th>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "8px 4px",
+                    borderBottom: "1px solid var(--cardBorder)",
+                  }}
+                >
+                  Email
+                </th>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "8px 4px",
+                    borderBottom: "1px solid var(--cardBorder)",
+                  }}
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {trainees.map((t) => (
+                <tr key={t.id}>
+                  <td style={{ padding: "8px 4px" }}>{t.full_name}</td>
+                  <td style={{ padding: "8px 4px", opacity: 0.9 }}>
+                    {t.email ?? "—"}
+                  </td>
+                  <td style={{ padding: "8px 4px" }}>
+                    <Link
+                      href={`/trainee/today?tid=${t.id}`}
+                      style={{
+                        fontSize: 13,
+                        padding: "4px 8px",
+                        borderRadius: 999,
+                        border: "1px solid var(--cardBorder)",
+                        textDecoration: "none",
+                        background: "#111827",
+                      }}
+                    >
+                      Open plan
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
