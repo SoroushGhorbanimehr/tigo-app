@@ -1,15 +1,20 @@
-
-// app/trainee/today/page.tsx
+// app/trainee/today/TodayPageClient.tsx
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getNotesForTrainee, setNotesForTrainee } from "@/lib/traineeNotesRepo";
+import {
+  loadNotesForTrainee,
+  saveNoteForTrainee,
+  NotesMap,
+} from "@/lib/traineeNotesRepo";
 
-function toISODate(d: Date) { return d.toISOString().slice(0, 10); }
+function toISODate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
 
-export default function TodayPage() {
+export default function TodayPageClient() {
   const today = useMemo(() => new Date(), []);
 
   const searchParams = useSearchParams();
@@ -24,12 +29,32 @@ export default function TodayPage() {
 
   const [selected, setSelected] = useState<string>(toISODate(today));
 
-  const [coachNotes, setCoachNotes] = useState<Record<string, string>>(
-    () => getNotesForTrainee(traineeId)
-  );
+  const [coachNotes, setCoachNotes] = useState<NotesMap>({});
+  const [loadingNotes, setLoadingNotes] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
+  // Load all notes for this trainee when page opens / traineeId changes
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingNotes(true);
+    loadNotesForTrainee(traineeId).then((map) => {
+      if (!cancelled) {
+        setCoachNotes(map);
+        setLoadingNotes(false);
+      }
+    });
 
-  const monthLabel = cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    return () => {
+      cancelled = true;
+    };
+  }, [traineeId]);
+
+  const monthLabel = cursor.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
 
   const daysGrid = useMemo(() => {
     const firstDay = new Date(cursor);
@@ -50,27 +75,64 @@ export default function TodayPage() {
   const isToday = (d: Date) => toISODate(d) === toISODate(today);
   const isSelected = (d: Date) => toISODate(d) === selected;
 
-  const prevMonth = () => { const d = new Date(cursor); d.setMonth(d.getMonth() - 1); setCursor(d); };
-  const nextMonth = () => { const d = new Date(cursor); d.setMonth(d.getMonth() + 1); setCursor(d); };
+  const prevMonth = () => {
+    const d = new Date(cursor);
+    d.setMonth(d.getMonth() - 1);
+    setCursor(d);
+  };
+  const nextMonth = () => {
+    const d = new Date(cursor);
+    d.setMonth(d.getMonth() + 1);
+    setCursor(d);
+  };
+
+  async function handleSave() {
+    setSaveStatus("saving");
+    try {
+      const note = coachNotes[selected] ?? "";
+      await saveNoteForTrainee(traineeId, selected, note);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  }
 
   return (
     <>
       <header className="t-header">
         <h1 className="t-title">Today</h1>
-        <Link href="/" style={{ textDecoration: "underline", opacity: 0.9 }}>← Home</Link>
+        <Link href="/" style={{ textDecoration: "underline", opacity: 0.9 }}>
+          ← Home
+        </Link>
       </header>
 
       <div className="t-today-grid">
         {/* Calendar + notes */}
         <div className="t-card">
           <div className="t-cal-head">
-            <button onClick={prevMonth} aria-label="Previous month" className="t-cal-navbtn">‹</button>
+            <button
+              onClick={prevMonth}
+              aria-label="Previous month"
+              className="t-cal-navbtn"
+            >
+              ‹
+            </button>
             <div style={{ fontWeight: 700 }}>{monthLabel}</div>
-            <button onClick={nextMonth} aria-label="Next month" className="t-cal-navbtn">›</button>
+            <button
+              onClick={nextMonth}
+              aria-label="Next month"
+              className="t-cal-navbtn"
+            >
+              ›
+            </button>
           </div>
 
           <div className="t-cal-week">
-            {weekLabels.map((w) => <div key={w}>{w}</div>)}
+            {weekLabels.map((w) => (
+              <div key={w}>{w}</div>
+            ))}
           </div>
 
           <div className="t-cal-grid">
@@ -83,8 +145,14 @@ export default function TodayPage() {
                 sel ? "t-cal-day--sel" : "",
               ].join(" ");
               return (
-                <button key={iso} onClick={() => setSelected(iso)} className={classes}>
-                  <div style={{ opacity: inMonth ? 1 : 0.55 }}>{date.getDate()}</div>
+                <button
+                  key={iso}
+                  onClick={() => setSelected(iso)}
+                  className={classes}
+                >
+                  <div style={{ opacity: inMonth ? 1 : 0.55 }}>
+                    {date.getDate()}
+                  </div>
                   {isToday(date) && <span className="t-cal-dot" />}
                 </button>
               );
@@ -92,32 +160,78 @@ export default function TodayPage() {
           </div>
 
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 6 }}>
-              Coach plan for <strong>{selected}</strong>
+            <div
+              style={{
+                fontSize: 14,
+                opacity: 0.9,
+                marginBottom: 6,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>
+                Coach plan for <strong>{selected}</strong>
+              </span>
+              {loadingNotes && <span style={{ fontSize: 12 }}>Loading…</span>}
             </div>
-                <textarea
-                  value={coachNotes[selected] ?? ""}
-                  onChange={(e) => {
-                    const updated = { ...coachNotes, [selected]: e.target.value };
-                    setCoachNotes(updated);
-                    setNotesForTrainee(traineeId, updated); // 🔥 save to shared store
-                  }}
-                  placeholder="Notes, reminders, links…"
-                  rows={4}
-                  style={{
-                    width: "100%",
-                    background: "#0f1420",
-                    color: "#fff",
-                    border: "1px solid var(--cardBorder)",
-                    borderRadius: 10,
-                    padding: 10,
-                    resize: "vertical",
-                  }}
-                />
+            <textarea
+              value={coachNotes[selected] ?? ""}
+              onChange={(e) => {
+                const updated = { ...coachNotes, [selected]: e.target.value };
+                setCoachNotes(updated);
+              }}
+              placeholder="Notes, reminders, links…"
+              rows={4}
+              style={{
+                width: "100%",
+                background: "#0f1420",
+                color: "#fff",
+                border: "1px solid var(--cardBorder)",
+                borderRadius: 10,
+                padding: 10,
+                resize: "vertical",
+              }}
+            />
+
+            <div
+              style={{
+                marginTop: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <button
+                onClick={handleSave}
+                disabled={saveStatus === "saving"}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--cardBorder)",
+                  background: "#1f2937",
+                  color: "#fff",
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                {saveStatus === "saving" ? "Saving…" : "Save note"}
+              </button>
+              {saveStatus === "saved" && (
+                <span style={{ fontSize: 12, color: "#22c55e" }}>
+                  Saved ✅
+                </span>
+              )}
+              {saveStatus === "error" && (
+                <span style={{ fontSize: 12, color: "#f97373" }}>
+                  Error saving
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Today program & meal */}
+        {/* Today program & meal (unchanged) */}
         <div style={{ display: "grid", gap: 12 }}>
           <section className="t-card">
             <h3>Todays Program</h3>
