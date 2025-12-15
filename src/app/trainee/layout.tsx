@@ -3,20 +3,13 @@
 
 import "./trainee.css";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
+  // keep it simple: just hide nav on login
   const hideNav = pathname === "/trainee/login";
-
-  // keep whatever is in the URL (tid, mode, etc.)
-  const suffix = useMemo(() => {
-    const qs = searchParams?.toString() ?? "";
-    return qs ? `?${qs}` : "";
-  }, [searchParams]);
 
   const tabs = [
     { href: "/trainee/today", label: "Today" },
@@ -36,7 +29,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
               return (
                 <Link
                   key={t.href}
-                  href={`${t.href}${suffix}`}
+                  href={t.href}
                   className="t-tab"
                   aria-current={active ? "page" : undefined}
                 >

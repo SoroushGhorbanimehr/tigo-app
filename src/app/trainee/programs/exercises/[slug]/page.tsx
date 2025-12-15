@@ -2,17 +2,26 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { getExerciseBySlug, Exercise } from "@/lib/exerciseRepo";
 
-export default function ExercisePage({ params }: { params: { slug: string } }) {
+export default function ExercisePage() {
+  const params = useParams<{ slug: string }>();
+  const sp = useSearchParams();
+  const isTrainer = sp.get("mode") === "trainer";
+
+  const slug = params?.slug;
+
   const [ex, setEx] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!slug) return;
+
     let cancelled = false;
     setLoading(true);
 
-    getExerciseBySlug(params.slug)
+    getExerciseBySlug(slug)
       .then((row) => {
         if (!cancelled) setEx(row);
       })
@@ -23,13 +32,16 @@ export default function ExercisePage({ params }: { params: { slug: string } }) {
     return () => {
       cancelled = true;
     };
-  }, [params.slug]);
+  }, [slug]);
 
   return (
     <div className="t-root">
       <header className="t-header">
         <h1 className="t-title">Exercise</h1>
-        <Link href="/trainee/programs" style={{ textDecoration: "underline", opacity: 0.9 }}>
+        <Link
+          href={`/trainee/programs${isTrainer ? "?mode=trainer" : ""}`}
+          style={{ textDecoration: "underline", opacity: 0.9 }}
+        >
           ← Back to Programs
         </Link>
       </header>
