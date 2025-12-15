@@ -1,14 +1,17 @@
-// app/trainee/today/TodayPageClient.tsx
 "use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  loadNotesForTrainee,
-  saveNoteForTrainee,
-  NotesMap,
-} from "@/lib/traineeNotesRepo";
+import { getDailyPlan, upsertDailyPlan } from "@/lib/dailyPlanRepo";
+
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+type PlanState = {
+  coach_note: string;
+  program: string;
+  meal: string;
+};
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -16,9 +19,11 @@ function toISODate(d: Date) {
 
 export default function TodayPageClient() {
   const today = useMemo(() => new Date(), []);
-
   const searchParams = useSearchParams();
-  const traineeId = searchParams.get("tid") ?? "self"; // "self" for normal trainee use
+
+  const traineeId = searchParams.get("tid") ?? "self";
+  const mode = searchParams.get("mode") ?? "trainee";
+  const isTrainer = mode === "trainer";
 
   // Calendar state
   const [cursor, setCursor] = useState(() => {
@@ -29,27 +34,37 @@ export default function TodayPageClient() {
 
   const [selected, setSelected] = useState<string>(toISODate(today));
 
-  const [coachNotes, setCoachNotes] = useState<NotesMap>({});
-  const [loadingNotes, setLoadingNotes] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
+  // Daily plan state
+  const [plan, setPlan] = useState<PlanState>({
+    coach_note: "",
+    program: "",
+    meal: "",
+  });
 
-  // Load all notes for this trainee when page opens / traineeId changes
+  const [loadingPlan, setLoadingPlan] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
   useEffect(() => {
     let cancelled = false;
-    setLoadingNotes(true);
-    loadNotesForTrainee(traineeId).then((map) => {
-      if (!cancelled) {
-        setCoachNotes(map);
-        setLoadingNotes(false);
-      }
-    });
+    setLoadingPlan(true);
+
+    getDailyPlan(traineeId, selected)
+      .then((p) => {
+        if (cancelled) return;
+        setPlan({
+          coach_note: p?.coach_note ?? "",
+          program: p?.program ?? "",
+          meal: p?.meal ?? "",
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPlan(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [traineeId]);
+  }, [traineeId, selected]);
 
   const monthLabel = cursor.toLocaleDateString(undefined, {
     month: "long",
@@ -60,14 +75,17 @@ export default function TodayPageClient() {
     const firstDay = new Date(cursor);
     const startWeekday = firstDay.getDay(); // 0=Sun
     const month = firstDay.getMonth();
+
     const days: { date: Date; inMonth: boolean }[] = [];
     const start = new Date(firstDay);
     start.setDate(1 - startWeekday);
+
     for (let i = 0; i < 42; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
       days.push({ date: d, inMonth: d.getMonth() === month });
     }
+
     return days;
   }, [cursor]);
 
@@ -80,17 +98,25 @@ export default function TodayPageClient() {
     d.setMonth(d.getMonth() - 1);
     setCursor(d);
   };
+
   const nextMonth = () => {
     const d = new Date(cursor);
     d.setMonth(d.getMonth() + 1);
     setCursor(d);
   };
 
-  async function handleSave() {
+  async function handleSaveAll() {
+    if (!isTrainer) return; // 🔒 lock editing for trainees
+
     setSaveStatus("saving");
     try {
-      const note = coachNotes[selected] ?? "";
-      await saveNoteForTrainee(traineeId, selected, note);
+      await upsertDailyPlan({
+        trainee_id: traineeId,
+        date: selected,
+        coach_note: plan.coach_note,
+        program: plan.program,
+        meal: plan.meal,
+      });
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch {
@@ -98,6 +124,11 @@ export default function TodayPageClient() {
       setTimeout(() => setSaveStatus("idle"), 3000);
     }
   }
+
+  const readonlyStyle = {
+    opacity: isTrainer ? 1 : 0.85,
+    cursor: isTrainer ? "text" : "not-allowed",
+  } as const;
 
   return (
     <>
@@ -109,13 +140,14 @@ export default function TodayPageClient() {
       </header>
 
       <div className="t-today-grid">
-        {/* Calendar + notes */}
+        {/* Left: Calendar + coach note */}
         <div className="t-card">
           <div className="t-cal-head">
             <button
               onClick={prevMonth}
               aria-label="Previous month"
               className="t-cal-navbtn"
+              type="button"
             >
               ‹
             </button>
@@ -124,6 +156,7 @@ export default function TodayPageClient() {
               onClick={nextMonth}
               aria-label="Next month"
               className="t-cal-navbtn"
+              type="button"
             >
               ›
             </button>
@@ -138,17 +171,18 @@ export default function TodayPageClient() {
           <div className="t-cal-grid">
             {daysGrid.map(({ date, inMonth }) => {
               const iso = toISODate(date);
-              const sel = isSelected(date);
               const classes = [
                 "t-cal-day",
                 !inMonth ? "t-cal-day--out" : "",
-                sel ? "t-cal-day--sel" : "",
+                isSelected(date) ? "t-cal-day--sel" : "",
               ].join(" ");
+
               return (
                 <button
                   key={iso}
                   onClick={() => setSelected(iso)}
                   className={classes}
+                  type="button"
                 >
                   <div style={{ opacity: inMonth ? 1 : 0.55 }}>
                     {date.getDate()}
@@ -159,7 +193,7 @@ export default function TodayPageClient() {
             })}
           </div>
 
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 14 }}>
             <div
               style={{
                 fontSize: 14,
@@ -171,18 +205,25 @@ export default function TodayPageClient() {
               }}
             >
               <span>
-                Coach plan for <strong>{selected}</strong>
+                Coach note for <strong>{selected}</strong>
               </span>
-              {loadingNotes && <span style={{ fontSize: 12 }}>Loading…</span>}
+              {loadingPlan && <span style={{ fontSize: 12 }}>Loading…</span>}
+              {!loadingPlan && !isTrainer && (
+                <span style={{ fontSize: 12, opacity: 0.75 }}>View-only</span>
+              )}
+              {!loadingPlan && isTrainer && (
+                <span style={{ fontSize: 12, opacity: 0.75 }}>Edit mode</span>
+              )}
             </div>
+
             <textarea
-              value={coachNotes[selected] ?? ""}
-              onChange={(e) => {
-                const updated = { ...coachNotes, [selected]: e.target.value };
-                setCoachNotes(updated);
-              }}
-              placeholder="Notes, reminders, links…"
-              rows={4}
+              value={plan.coach_note}
+              onChange={(e) =>
+                setPlan((p) => ({ ...p, coach_note: e.target.value }))
+              }
+              placeholder={isTrainer ? "Notes, reminders, links…" : "View only"}
+              readOnly={!isTrainer}
+              rows={5}
               style={{
                 width: "100%",
                 background: "#0f1420",
@@ -191,67 +232,116 @@ export default function TodayPageClient() {
                 borderRadius: 10,
                 padding: 10,
                 resize: "vertical",
+                ...readonlyStyle,
               }}
             />
 
-            <div
-              style={{
-                marginTop: 8,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <button
-                onClick={handleSave}
-                disabled={saveStatus === "saving"}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--cardBorder)",
-                  background: "#1f2937",
-                  color: "#fff",
-                  fontSize: 14,
-                  cursor: "pointer",
-                }}
-              >
-                {saveStatus === "saving" ? "Saving…" : "Save note"}
-              </button>
-              {saveStatus === "saved" && (
-                <span style={{ fontSize: 12, color: "#22c55e" }}>
-                  Saved ✅
-                </span>
-              )}
-              {saveStatus === "error" && (
-                <span style={{ fontSize: 12, color: "#f97373" }}>
-                  Error saving
+            <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+              {isTrainer ? (
+                <>
+                  <button
+                    onClick={handleSaveAll}
+                    disabled={saveStatus === "saving"}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 10,
+                      border: "1px solid var(--cardBorder)",
+                      background: "#1f2937",
+                      color: "#fff",
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                    type="button"
+                  >
+                    {saveStatus === "saving" ? "Saving…" : "Save changes"}
+                  </button>
+
+                  {saveStatus === "saved" && (
+                    <span style={{ fontSize: 12, color: "#22c55e" }}>
+                      Saved ✅
+                    </span>
+                  )}
+                  {saveStatus === "error" && (
+                    <span style={{ fontSize: 12, color: "#f97373" }}>
+                      Error saving
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span style={{ fontSize: 12, opacity: 0.75 }}>
+                  Only Coach Tigo can edit Program/Meal/Notes.
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Today program & meal (unchanged) */}
+        {/* Right: Program + Meal (editable only for trainer) */}
         <div style={{ display: "grid", gap: 12 }}>
           <section className="t-card">
-            <h3>Todays Program</h3>
-            <ul className="t-list">
-              <li>Warm-up: 10 min incline walk</li>
-              <li>Bench press 4×8</li>
-              <li>Lat pulldown 4×10</li>
-              <li>DB shoulder press 3×12</li>
-              <li>Core circuit 10 min</li>
-            </ul>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h3 style={{ margin: 0 }}>Today’s Program</h3>
+              <span style={{ fontSize: 12, opacity: 0.75 }}>{selected}</span>
+            </div>
+
+            <textarea
+              value={plan.program}
+              onChange={(e) =>
+                setPlan((p) => ({ ...p, program: e.target.value }))
+              }
+              placeholder={isTrainer ? "Write the workout plan here…" : "View only"}
+              readOnly={!isTrainer}
+              rows={10}
+              style={{
+                marginTop: 10,
+                width: "100%",
+                background: "#0f1420",
+                color: "#fff",
+                border: "1px solid var(--cardBorder)",
+                borderRadius: 10,
+                padding: 10,
+                resize: "vertical",
+                ...readonlyStyle,
+              }}
+            />
           </section>
 
           <section className="t-card">
-            <h3>Todays Meal</h3>
-            <ul className="t-list">
-              <li>08:00 – Greek yogurt + whey + berries</li>
-              <li>12:30 – Chicken breast, rice, salad</li>
-              <li>17:00 – Pre-workout snack: banana + PB</li>
-              <li>20:00 – Salmon, quinoa, veggies</li>
-            </ul>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h3 style={{ margin: 0 }}>Today’s Meal</h3>
+              <span style={{ fontSize: 12, opacity: 0.75 }}>{selected}</span>
+            </div>
+
+            <textarea
+              value={plan.meal}
+              onChange={(e) => setPlan((p) => ({ ...p, meal: e.target.value }))}
+              placeholder={isTrainer ? "Write the meal plan here…" : "View only"}
+              readOnly={!isTrainer}
+              rows={8}
+              style={{
+                marginTop: 10,
+                width: "100%",
+                background: "#0f1420",
+                color: "#fff",
+                border: "1px solid var(--cardBorder)",
+                borderRadius: 10,
+                padding: 10,
+                resize: "vertical",
+                ...readonlyStyle,
+              }}
+            />
           </section>
         </div>
       </div>

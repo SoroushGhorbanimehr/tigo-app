@@ -95,7 +95,7 @@ export default function TrainerClientsPage() {
                   </td>
                   <td style={{ padding: "8px 4px" }}>
                     <Link
-                      href={`/trainee/today?tid=${t.id}`}
+                      href={`/trainee/today?tid=${t.id}&mode=trainer`}
                       style={{
                         fontSize: 13,
                         padding: "4px 8px",
