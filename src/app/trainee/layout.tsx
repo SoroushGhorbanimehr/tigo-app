@@ -1,13 +1,23 @@
-// app/trainee/layout.tsx
+// src/app/trainee/layout.tsx
 "use client";
 
 import "./trainee.css";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const hideNav = pathname === "/trainee/login";
+
+  // keep whatever is in the URL (tid, mode, etc.)
+  const suffix = useMemo(() => {
+    const qs = searchParams?.toString() ?? "";
+    return qs ? `?${qs}` : "";
+  }, [searchParams]);
+
   const tabs = [
     { href: "/trainee/today", label: "Today" },
     { href: "/trainee/programs", label: "Programs" },
@@ -26,7 +36,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
               return (
                 <Link
                   key={t.href}
-                  href={t.href}
+                  href={`${t.href}${suffix}`}
                   className="t-tab"
                   aria-current={active ? "page" : undefined}
                 >

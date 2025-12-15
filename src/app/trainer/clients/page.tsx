@@ -32,14 +32,39 @@ export default function TrainerClientsPage() {
     <div className="t-root">
       <header className="t-header">
         <h1 className="t-title">Coach TIGO – Trainees</h1>
-        <Link
-          href="/"
-          style={{ textDecoration: "underline", opacity: 0.9 }}
-        >
-          ← Back to entrance
-        </Link>
+            <Link href="/trainer" style={{ textDecoration: "underline", opacity: 0.9 }}>
+              ← Back to dashboard
+            </Link>
       </header>
+        <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+          <Link
+            href="/trainer/clients"
+            style={{
+              padding: ".65rem 1rem",
+              borderRadius: "10px",
+              fontWeight: 800,
+              textDecoration: "none",
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(255,255,255,0.06)",
+            }}
+          >
+            Trainees (real table)
+          </Link>
 
+          <Link
+            href="/trainee/programs?mode=trainer"
+            style={{
+              padding: ".65rem 1rem",
+              borderRadius: "10px",
+              fontWeight: 800,
+              textDecoration: "none",
+              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(255,255,255,0.06)",
+            }}
+          >
+            Exercise Library
+          </Link>
+        </div>
       <div className="t-card" style={{ overflowX: "auto" }}>
         {loading ? (
           <p style={{ fontSize: 14, opacity: 0.9 }}>Loading trainees…</p>
@@ -93,21 +118,21 @@ export default function TrainerClientsPage() {
                   <td style={{ padding: "8px 4px", opacity: 0.9 }}>
                     {t.email ?? "—"}
                   </td>
-                  <td style={{ padding: "8px 4px" }}>
-                    <Link
-                      href={`/trainee/today?tid=${t.id}&mode=trainer`}
-                      style={{
-                        fontSize: 13,
-                        padding: "4px 8px",
-                        borderRadius: 999,
-                        border: "1px solid var(--cardBorder)",
-                        textDecoration: "none",
-                        background: "#111827",
-                      }}
-                    >
-                      Open plan
-                    </Link>
-                  </td>
+                    <td style={{ padding: "8px 4px" }}>
+                      <Link
+                        href={`/trainee/today?tid=${t.id}&mode=trainer`}
+                        style={{
+                          fontSize: 13,
+                          padding: "4px 8px",
+                          borderRadius: 999,
+                          border: "1px solid var(--cardBorder)",
+                          textDecoration: "none",
+                          background: "#111827",
+                        }}
+                      >
+                        Open plan
+                      </Link>
+                    </td>
                 </tr>
               ))}
             </tbody>
