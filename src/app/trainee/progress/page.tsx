@@ -657,8 +657,8 @@ export default function ProgressPage() {
       setWNote("");
       toast("Saved ✅");
       setTab("overview");
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to save.");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to save.");
     } finally {
       setSavingW(false);
     }
@@ -705,8 +705,8 @@ export default function ProgressPage() {
       setPPreview(null);
       setPNote("");
       toast("Photo saved ✅");
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to save photo.");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to save photo.");
     } finally {
       setSavingP(false);
     }
@@ -762,8 +762,8 @@ export default function ProgressPage() {
       setMArm("");
       setMThigh("");
       toast("Measurements saved ✅");
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to save measurements.");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to save measurements.");
     } finally {
       setSavingM(false);
     }
@@ -809,8 +809,8 @@ export default function ProgressPage() {
       setSNote("");
       setSCustom("");
       toast("PR saved ✅");
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to save.");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to save.");
     } finally {
       setSavingS(false);
     }
@@ -953,8 +953,8 @@ export default function ProgressPage() {
         setStrength(data.strength);
       }
       toast("Import complete ✅");
-    } catch (e: any) {
-      setErr(e?.message ?? "Import failed.");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Import failed.");
     }
   }
 
@@ -1751,13 +1751,17 @@ export default function ProgressPage() {
                 <input value={mNote} onChange={(e) => setMNote(e.target.value)} className="t-input" style={{ width: "100%" }} placeholder="e.g., after deload" />
               </div>
 
-              {[
+              {([
                 ["Waist", mWaist, setMWaist],
                 ["Chest", mChest, setMChest],
                 ["Hips", mHips, setMHips],
                 ["Upper arm", mArm, setMArm],
                 ["Thigh", mThigh, setMThigh],
-              ].map(([label, val, setVal]) => (
+              ] as Array<[
+                label: string,
+                value: string,
+                setter: React.Dispatch<React.SetStateAction<string>>
+              ]>).map(([label, val, setter]) => (
                 <div key={label as string} style={{ gridColumn: "span 6" }}>
                   <label style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
                     {label} ({unitL})
@@ -1765,7 +1769,7 @@ export default function ProgressPage() {
                   <input
                     inputMode="decimal"
                     value={val as string}
-                    onChange={(e) => (setVal as any)(e.target.value)}
+                    onChange={(e) => setter(e.target.value)}
                     className="t-input"
                     style={{ width: "100%" }}
                     placeholder={unitL === "cm" ? "e.g., 101" : "e.g., 39.8"}
@@ -1784,7 +1788,7 @@ export default function ProgressPage() {
             <div style={{ marginTop: 12, ...cardSoft }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <h3 style={{ margin: 0, fontSize: 16 }}>📈 Trend</h3>
-                <select className="t-input" style={{ width: 190 }} value={mFocus} onChange={(e) => setMFocus(e.target.value as any)}>
+                <select className="t-input" style={{ width: 190 }} value={mFocus} onChange={(e) => setMFocus(e.target.value as keyof MeasurementsEntry)}>
                   <option value="waist_cm">Waist</option>
                   <option value="chest_cm">Chest</option>
                   <option value="hips_cm">Hips</option>
