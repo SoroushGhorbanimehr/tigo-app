@@ -1,4 +1,6 @@
 "use client";
+// TODO: this page should be shared between trainer and trainee, with different modes. so I should move this part to trainer
+// and refactor the trainee to use this too.
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
