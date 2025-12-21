@@ -120,7 +120,7 @@ export default function ProgramsPage() {
               placeholder="Title (e.g., Incline Bench Press)"
               style={inputStyle}
             />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="t-grid-2">
               <input
                 value={muscle}
                 onChange={(e) => setMuscle(e.target.value)}
@@ -179,13 +179,7 @@ export default function ProgramsPage() {
             filtered.map((ex) => (
               <div
                 key={ex.id}
-                className="t-card"
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  alignItems: "center",
-                }}
+                className="t-card t-listitem"
               >
                 <Link
                   href={`/trainee/programs/exercises/${ex.slug}${isTrainer ? "?mode=trainer" : ""}`}
@@ -263,9 +257,9 @@ function TrainerControls(props: { ex: Exercise; onUpdated: () => Promise<void> }
   }
 
   return (
-    <div style={{ width: 360, maxWidth: "45%", display: "grid", gap: 8 }}>
+    <div className="t-actions" style={{ display: "grid", gap: 8, minWidth: 0 }}>
       <input value={title} onChange={(e) => setTitle(e.target.value)} style={miniInputStyle} />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      <div className="t-grid-2">
         <input value={muscle} onChange={(e) => setMuscle(e.target.value)} placeholder="muscle" style={miniInputStyle} />
         <input value={equipment} onChange={(e) => setEquipment(e.target.value)} placeholder="equipment" style={miniInputStyle} />
       </div>

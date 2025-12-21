@@ -1521,7 +1521,7 @@ export default function ProgressPage() {
                 const score = (v.workout ? 1 : 0) + (v.steps ? 1 : 0) + (v.water ? 1 : 0);
 
                 return (
-                  <div key={k} style={{ display: "grid", gridTemplateColumns: "1.2fr repeat(3, 1fr) 0.7fr", gap: 8, alignItems: "center", padding: 10, borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div key={k} className="pg-habit-row">
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 850 }}>{d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</div>
                       <div style={{ fontSize: 12, opacity: 0.75 }}>Score {score}/3</div>
@@ -1531,7 +1531,7 @@ export default function ProgressPage() {
                     <button className="t-btn" style={{ opacity: v.steps ? 1 : 0.6 }} onClick={() => toggleHabit(k, "steps")} title="Steps">🚶</button>
                     <button className="t-btn" style={{ opacity: v.water ? 1 : 0.6 }} onClick={() => toggleHabit(k, "water")} title="Water">💧</button>
 
-                    <div style={{ textAlign: "right", fontSize: 12, opacity: 0.75 }}>
+                    <div className="pg-habit-status" style={{ fontSize: 12, opacity: 0.75 }}>
                       {score === 3 ? "Perfect" : score === 2 ? "Good" : score === 1 ? "Start" : "Rest"}
                     </div>
                   </div>
@@ -1588,7 +1588,7 @@ export default function ProgressPage() {
               Best practice: same lighting, same angle, same time of day.
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="t-grid-2" style={{ display: "grid", gap: 10 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Angle</label>
                 <select value={pLabel} onChange={(e) => setPLabel(e.target.value as PhotoLabel)} className="t-input" style={{ width: "100%" }}>
@@ -1630,6 +1630,7 @@ export default function ProgressPage() {
             {pPreview ? (
               <div style={{ marginTop: 12, ...cardSoft }}>
                 <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>Preview</div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={pPreview} alt="preview" style={{ width: "100%", borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)" }} />
               </div>
             ) : null}
@@ -1682,8 +1683,10 @@ export default function ProgressPage() {
                   </div>
 
                   <div className="pg-compare">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     {comparePhotoB ? <img src={comparePhotoB.url} alt="B" className="pg-compare-img" /> : null}
                     {comparePhotoA ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={comparePhotoA.url}
                         alt="A"
@@ -1722,6 +1725,7 @@ export default function ProgressPage() {
                     </div>
                     <button className="t-btn" style={{ opacity: 0.75 }} onClick={() => removePhoto(p.id)}>✕</button>
                   </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={p.url} alt={p.label} style={{ width: "100%", borderRadius: 14, border: "1px solid rgba(255,255,255,0.10)", marginTop: 10 }} />
                   {p.note ? <div style={{ marginTop: 8, fontSize: 12, opacity: 0.82 }}>📝 {p.note}</div> : null}
                 </div>
@@ -1822,7 +1826,7 @@ export default function ProgressPage() {
                       <button className="t-btn" style={{ opacity: 0.75 }} onClick={() => removeMeasurement(m.id)}>✕</button>
                     </div>
 
-                    <div style={{ marginTop: 8, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, fontSize: 12 }}>
+                    <div className="t-grid-2" style={{ marginTop: 8, display: "grid", gap: 8, fontSize: 12 }}>
                       <div><span style={{ opacity: 0.75 }}>Waist:</span> <b>{show(m.waist_cm)}</b></div>
                       <div><span style={{ opacity: 0.75 }}>Chest:</span> <b>{show(m.chest_cm)}</b></div>
                       <div><span style={{ opacity: 0.75 }}>Hips:</span> <b>{show(m.hips_cm)}</b></div>
@@ -1865,7 +1869,7 @@ export default function ProgressPage() {
               <div style={{ gridColumn: "span 6" }}>
                 <label style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Date</label>
                 <input type="date" className="t-input" style={{ width: "100%" }} value={sDate} onChange={(e) => setSDate(e.target.value)} />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+                <div className="t-grid-2" style={{ display: "grid", gap: 10, marginTop: 10 }}>
                   <div>
                     <label style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Weight ({unitW})</label>
                     <input inputMode="decimal" className="t-input" style={{ width: "100%" }} value={sWeight} onChange={(e) => setSWeight(e.target.value)} placeholder={unitW === "kg" ? "e.g., 100" : "e.g., 225"} />
@@ -2009,6 +2013,24 @@ export default function ProgressPage() {
 
         @media (max-width: 980px) {
           .pg-span-7, .pg-span-6, .pg-span-5, .pg-span-3 { grid-column: span 12; }
+        }
+
+        /* Habits row responsive */
+        .pg-habit-row {
+          display: grid;
+          grid-template-columns: 1.2fr repeat(3, 1fr) 0.7fr;
+          gap: 8px;
+          align-items: center;
+          padding: 10px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.06);
+        }
+        .pg-habit-status { text-align: right; }
+        @media (max-width: 640px) {
+          .pg-habit-row { grid-template-columns: repeat(3, 1fr); }
+          .pg-habit-row > :first-child { grid-column: 1 / -1; }
+          .pg-habit-status { grid-column: 1 / -1; text-align: left; }
         }
 
         .pg-compare {

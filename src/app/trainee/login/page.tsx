@@ -37,7 +37,7 @@ export default function TraineeLoginPage() {
 
       const trainee = data as Trainee;
       router.push(`/trainee/today?tid=${trainee.id}`);
-    } catch (err) {
+    } catch {
       setStatus("error");
       setErrorMsg("Login failed");
     } finally {

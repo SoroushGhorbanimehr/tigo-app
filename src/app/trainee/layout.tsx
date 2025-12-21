@@ -31,6 +31,7 @@ function BottomNav({ pathname }: { pathname: string }) {
   const tabs = [
     { href: "/trainee/today", label: "Today" },
     { href: "/trainee/programs", label: "Programs" },
+    { href: "/trainee/recipes", label: "Recipes" },
     { href: "/trainee/progress", label: "Progress" },
   ];
 

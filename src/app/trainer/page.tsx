@@ -40,11 +40,23 @@ export default function TrainerPage() {
             Add/edit exercises and upload demo videos.
           </p>
         </Link>
+
+        {/* Recipe Library */}
+        <Link
+          href="/trainee/recipes?mode=trainer"
+          className="t-card"
+          style={{ cursor: "pointer", textDecoration: "none" }}
+        >
+          <h2 style={{ marginBottom: 8 }}>Recipe Library</h2>
+          <p style={{ opacity: 0.85, fontSize: 14 }}>
+            Add recipes with image and preparation notes.
+          </p>
+        </Link>
       </div>
 
       <div className="t-card" style={{ marginTop: 14, opacity: 0.85, fontSize: 13 }}>
         Tip: We removed the mock tabs (Programs/Trainees/Sessions/Analytics) to avoid confusion.
-        Everything real is now under <strong>Trainees</strong> and <strong>Exercise Library</strong>.
+        Everything real is now under <strong>Trainees</strong>, <strong>Exercise Library</strong>, and <strong>Recipe Library</strong>.
       </div>
     </div>
   );
