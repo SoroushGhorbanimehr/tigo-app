@@ -284,7 +284,7 @@ export default function TodayPageClient() {
     autosize(mealRef.current);
   }, [plan.coach_note, plan.program, plan.meal]);
 
-  function insertAtCursor(ref: React.RefObject<HTMLTextAreaElement>, text: string) {
+  function insertAtCursor(ref: React.RefObject<HTMLTextAreaElement | null>, text: string) {
     const el = ref.current;
     if (!el) return;
     const start = el.selectionStart ?? el.value.length;
@@ -306,7 +306,7 @@ export default function TodayPageClient() {
   }
 
   function wrapSelection(
-    ref: React.RefObject<HTMLTextAreaElement>,
+    ref: React.RefObject<HTMLTextAreaElement | null>,
     prefix: string,
     suffix: string,
     placeholder = "text"
@@ -332,14 +332,13 @@ export default function TodayPageClient() {
   }
 
   type ToolbarProps = {
-    modeKey: "coach" | "program" | "meal";
-    refEl: React.RefObject<HTMLTextAreaElement>;
+    refEl: React.RefObject<HTMLTextAreaElement | null>;
     clear: () => void;
-    insert: (ref: React.RefObject<HTMLTextAreaElement>, text: string) => void;
+    insert: (ref: React.RefObject<HTMLTextAreaElement | null>, text: string) => void;
     presets?: "program" | "meal";
   };
 
-  function EditorToolbar({ modeKey, refEl, clear, insert, presets }: ToolbarProps) {
+  function EditorToolbar({ refEl, clear, insert, presets }: ToolbarProps) {
     return (
       <div className="t-editor-toolbar" style={{ marginBottom: 8 }}>
         <button className="t-toolbtn" type="button" title="Heading 1" onClick={() => insert(refEl, ("# "))}>H1</button>
@@ -537,7 +536,6 @@ export default function TodayPageClient() {
                       className="t-segment-btn"
                       role="tab"
                       aria-selected={modeCoach === "write"}
-                      aria-pressed={modeCoach === "write"}
                       onClick={() => setModeCoach("write")}
                     >
                       Write
@@ -547,7 +545,6 @@ export default function TodayPageClient() {
                       className="t-segment-btn"
                       role="tab"
                       aria-selected={modeCoach === "preview"}
-                      aria-pressed={modeCoach === "preview"}
                       onClick={() => setModeCoach("preview")}
                     >
                       Preview
@@ -566,7 +563,6 @@ export default function TodayPageClient() {
 
             {isTrainer && modeCoach === "write" && (
               <EditorToolbar
-                modeKey="coach"
                 refEl={coachRef}
                 clear={() => setPlan((p) => ({ ...p, coach_note: "" }))}
                 insert={insertAtCursor}
@@ -635,7 +631,6 @@ export default function TodayPageClient() {
                     className="t-segment-btn"
                     role="tab"
                     aria-selected={modeProgram === "write"}
-                    aria-pressed={modeProgram === "write"}
                     onClick={() => setModeProgram("write")}
                   >
                     Write
@@ -645,7 +640,6 @@ export default function TodayPageClient() {
                     className="t-segment-btn"
                     role="tab"
                     aria-selected={modeProgram === "preview"}
-                    aria-pressed={modeProgram === "preview"}
                     onClick={() => setModeProgram("preview")}
                   >
                     Preview
@@ -656,7 +650,6 @@ export default function TodayPageClient() {
 
             {isTrainer && modeProgram === "write" && (
               <EditorToolbar
-                modeKey="program"
                 refEl={programRef}
                 clear={() => setPlan((p) => ({ ...p, program: "" }))}
                 insert={insertAtCursor}
@@ -692,7 +685,6 @@ export default function TodayPageClient() {
                     className="t-segment-btn"
                     role="tab"
                     aria-selected={modeMeal === "write"}
-                    aria-pressed={modeMeal === "write"}
                     onClick={() => setModeMeal("write")}
                   >
                     Write
@@ -702,7 +694,6 @@ export default function TodayPageClient() {
                     className="t-segment-btn"
                     role="tab"
                     aria-selected={modeMeal === "preview"}
-                    aria-pressed={modeMeal === "preview"}
                     onClick={() => setModeMeal("preview")}
                   >
                     Preview
@@ -713,7 +704,6 @@ export default function TodayPageClient() {
 
             {isTrainer && modeMeal === "write" && (
               <EditorToolbar
-                modeKey="meal"
                 refEl={mealRef}
                 clear={() => setPlan((p) => ({ ...p, meal: "" }))}
                 insert={insertAtCursor}
