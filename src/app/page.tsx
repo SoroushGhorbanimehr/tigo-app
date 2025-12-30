@@ -2,54 +2,12 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { I18nProvider, useI18n } from "@/lib/i18n/I18nProvider";
+import LanguageSwitcherClient from "./LanguageSwitcherClient";
 
 
-export default function Home() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-      // Allow the DOM to swap from splash to main, then fade in
-      setTimeout(() => setRevealed(true), 30);
-    }, 2500); // Show splash for 2.5 seconds
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (showSplash) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-          backgroundColor: "black",
-          transition: "opacity 1s ease",
-        }}
-      >
-        <img
-          src="/coach_logo.png"
-          alt="Coach Tigo Logo"
-          style={{
-            width: "min(70%, 320px)",
-            height: "auto",
-            opacity: 0.95,
-            animation: "fadeOut 1s ease-out 4s forwards",
-          }}
-        />
-        <style jsx>{`
-          @keyframes fadeOut {
-            to {
-              opacity: 0;
-            }
-          }
-        `}</style>
-      </div>
-    );
-  }
-
+function TranslatableMain({ revealed }: { revealed: boolean }) {
+  const { t } = useI18n();
   return (
     <main
       style={{
@@ -139,7 +97,7 @@ export default function Home() {
             marginBottom: "1.25rem",
           }}
         >
-          Select your role
+          {t("selectRole")}
         </p>
 
         <div
@@ -164,7 +122,7 @@ export default function Home() {
               WebkitBackdropFilter: "blur(4px)",
             }}
           >
-            Client
+            {t("client")}
           </Link>
 
           <Link
@@ -181,30 +139,66 @@ export default function Home() {
               WebkitBackdropFilter: "blur(4px)",
             }}
           >
-            Trainer
+            {t("trainer")}
           </Link>
         </div>
 
         {/* Language selector */}
-        <div
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            display: "flex",
-            gap: 8,
-            fontWeight: 700,
-            opacity: 0.95,
-          }}
-          aria-label="Language selector"
-        >
-          <a href="#" style={{ color: "#fff", textDecoration: "none" }}>EN</a>
-          <span style={{ opacity: 0.7 }}>|</span>
-          <a href="#" style={{ color: "#fff", textDecoration: "none" }}>FR</a>
-          <span style={{ opacity: 0.7 }}>|</span>
-          <a href="#" style={{ color: "#fff", textDecoration: "none" }}>ES</a>
-        </div>
+        <LanguageSwitcherClient />
       </section>
     </main>
+  );
+}
+
+export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+      // Allow the DOM to swap from splash to main, then fade in
+      setTimeout(() => setRevealed(true), 30);
+    }, 2500); // Show splash for 2.5 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (showSplash) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          backgroundColor: "black",
+          transition: "opacity 1s ease",
+        }}
+      >
+        <img
+          src="/coach_logo.png"
+          alt="Coach Tigo Logo"
+          style={{
+            width: "min(70%, 320px)",
+            height: "auto",
+            opacity: 0.95,
+            animation: "fadeOut 1s ease-out 4s forwards",
+          }}
+        />
+        <style jsx>{`
+          @keyframes fadeOut {
+            to {
+              opacity: 0;
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return (
+    <I18nProvider>
+      <TranslatableMain revealed={revealed} />
+    </I18nProvider>
   );
 }
