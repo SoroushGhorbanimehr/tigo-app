@@ -20,7 +20,13 @@ export default function TrainerLoginPage() {
       username.trim() === TRAINER_USERNAME &&
       password === TRAINER_PASSWORD
     ) {
-      // Later you can set localStorage/session here if you want protection
+      // Store trainer display name for greeting
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("trainerName", username.trim() || "Tigo");
+        }
+      } catch {}
+      // Later you can set session for protection
       router.push("/trainer/clients");
     } else {
       setStatus("error");
@@ -30,12 +36,9 @@ export default function TrainerLoginPage() {
   return (
     <div className="t-root">
       <header className="t-header">
-        <h1 className="t-title">Trainer Login</h1>
-        <Link
-          href="/"
-          style={{ textDecoration: "underline", opacity: 0.9 }}
-        >
-          ← Back to entrance
+        <h1 className="t-title">Trainer</h1>
+        <Link href="/" className="t-link" style={{ opacity: 0.9 }}>
+          ← Back
         </Link>
       </header>
 
@@ -43,49 +46,19 @@ export default function TrainerLoginPage() {
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
           <label style={{ display: "grid", gap: 4 }}>
             <span>Username</span>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={{
-                padding: 8,
-                borderRadius: 8,
-                border: "1px solid var(--cardBorder)",
-                background: "#0f1420",
-                color: "#fff",
-              }}
-            />
+            <input className="t-input" value={username} onChange={(e) => setUsername(e.target.value)} />
           </label>
 
           <label style={{ display: "grid", gap: 4 }}>
             <span>Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                padding: 8,
-                borderRadius: 8,
-                border: "1px solid var(--cardBorder)",
-                background: "#0f1420",
-                color: "#fff",
-              }}
-            />
+            <input className="t-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
 
           <button
             type="submit"
-            style={{
-              marginTop: 8,
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid var(--cardBorder)",
-              background: "#1f2937",
-              color: "#fff",
-              cursor: "pointer",
-              fontWeight: 600,
-            }}
-          >
-            Login as Tigo
+            className="t-btn t-btn--primary"
+            >
+            Log in
           </button>
 
           {status === "error" && (

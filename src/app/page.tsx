@@ -129,7 +129,7 @@ export default function Home() {
             margin: "0 0 0.75rem 0",
           }}
         >
-          Welcome to Coach TIGO App!
+          TIGO ATHLETICS
         </h1>
 
         <p
@@ -139,7 +139,7 @@ export default function Home() {
             marginBottom: "1.25rem",
           }}
         >
-          Choose your role to continue.
+          Select your role
         </p>
 
         <div
@@ -151,7 +151,7 @@ export default function Home() {
           }}
         >
           <Link
-            href="/trainee"   // 👈 changed from "/trainee"
+            href="/trainee/login"
             className="t-role-card"
             style={{
               padding: "0.9rem 1.4rem",
@@ -164,11 +164,12 @@ export default function Home() {
               WebkitBackdropFilter: "blur(4px)",
             }}
           >
-            I am a Trainee
+            Client
           </Link>
 
           <Link
-            href="/trainer/login"   // 👈 changed from "/trainer"
+            href="/trainer/login"
+            className="t-role-card"
             style={{
               padding: "0.9rem 1.4rem",
               borderRadius: "10px",
@@ -180,8 +181,28 @@ export default function Home() {
               WebkitBackdropFilter: "blur(4px)",
             }}
           >
-            I am a Trainer
+            Trainer
           </Link>
+        </div>
+
+        {/* Language selector */}
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            display: "flex",
+            gap: 8,
+            fontWeight: 700,
+            opacity: 0.95,
+          }}
+          aria-label="Language selector"
+        >
+          <a href="#" style={{ color: "#fff", textDecoration: "none" }}>EN</a>
+          <span style={{ opacity: 0.7 }}>|</span>
+          <a href="#" style={{ color: "#fff", textDecoration: "none" }}>FR</a>
+          <span style={{ opacity: 0.7 }}>|</span>
+          <a href="#" style={{ color: "#fff", textDecoration: "none" }}>ES</a>
         </div>
       </section>
     </main>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getDailyPlan, upsertDailyPlan } from "@/lib/dailyPlanRepo";
+import { getTraineeById } from "@/lib/traineeRepo";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -24,6 +25,7 @@ export default function TodayPageClient() {
   const traineeId = searchParams.get("tid") ?? "self";
   const mode = searchParams.get("mode") ?? "trainee";
   const isTrainer = mode === "trainer";
+  const [traineeName, setTraineeName] = useState<string | null>(null);
 
   // Calendar state
   const [cursor, setCursor] = useState(() => {
@@ -43,6 +45,21 @@ export default function TodayPageClient() {
 
   const [loadingPlan, setLoadingPlan] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
+  // Load trainee name for greeting (client mode only)
+  useEffect(() => {
+    let cancelled = false;
+    async function loadName() {
+      if (isTrainer) return;
+      if (!traineeId || traineeId === "self") return;
+      const t = await getTraineeById(traineeId);
+      if (!cancelled) setTraineeName(t?.full_name ?? null);
+    }
+    loadName();
+    return () => {
+      cancelled = true;
+    };
+  }, [isTrainer, traineeId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +109,11 @@ export default function TodayPageClient() {
   const weekLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const isToday = (d: Date) => toISODate(d) === toISODate(today);
   const isSelected = (d: Date) => toISODate(d) === selected;
+  const formattedSelected = new Date(selected).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 
   const prevMonth = () => {
     const d = new Date(cursor);
@@ -139,9 +161,16 @@ export default function TodayPageClient() {
         </Link>
       </header>
 
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+        {!isTrainer && (
+          <div className="t-subtitle">Welcome back{traineeName ? `, ${traineeName}` : ""}</div>
+        )}
+        <div className="t-subtitle" aria-live="polite">{formattedSelected}</div>
+      </div>
+
       <div className="t-today-grid">
         {/* Left: Calendar + coach note */}
-        <div className="t-card">
+        <div className="t-card t-card--hoverable">
           <div className="t-cal-head">
             <button
               onClick={prevMonth}
@@ -194,26 +223,20 @@ export default function TodayPageClient() {
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <div
-              style={{
-                fontSize: 14,
-                opacity: 0.9,
-                marginBottom: 6,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <span>
-                Coach note for <strong>{selected}</strong>
-              </span>
-              {loadingPlan && <span style={{ fontSize: 12 }}>Loading…</span>}
-              {!loadingPlan && !isTrainer && (
-                <span style={{ fontSize: 12, opacity: 0.75 }}>View-only</span>
-              )}
-              {!loadingPlan && isTrainer && (
-                <span style={{ fontSize: 12, opacity: 0.75 }}>Edit mode</span>
-              )}
+            <div className="t-section-head">
+              <div>
+                <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 2 }}>Coach note</div>
+                <div className="t-subtitle" style={{ opacity: 0.7 }}>{selected}</div>
+              </div>
+              <div>
+                {loadingPlan && <span className="t-chip t-chip--view">Loading…</span>}
+                {!loadingPlan && !isTrainer && (
+                  <span className="t-chip t-chip--view">View only</span>
+                )}
+                {!loadingPlan && isTrainer && (
+                  <span className="t-chip t-chip--edit">Edit mode</span>
+                )}
+              </div>
             </div>
 
             <textarea
@@ -224,16 +247,8 @@ export default function TodayPageClient() {
               placeholder={isTrainer ? "Notes, reminders, links…" : "View only"}
               readOnly={!isTrainer}
               rows={5}
-              style={{
-                width: "100%",
-                background: "#0f1420",
-                color: "#fff",
-                border: "1px solid var(--cardBorder)",
-                borderRadius: 10,
-                padding: 10,
-                resize: "vertical",
-                ...readonlyStyle,
-              }}
+              className="t-textarea"
+              style={{ ...readonlyStyle }}
             />
 
             <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
@@ -242,15 +257,7 @@ export default function TodayPageClient() {
                   <button
                     onClick={handleSaveAll}
                     disabled={saveStatus === "saving"}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: 10,
-                      border: "1px solid var(--cardBorder)",
-                      background: "#1f2937",
-                      color: "#fff",
-                      fontSize: 14,
-                      cursor: "pointer",
-                    }}
+                    className="t-btn t-btn--primary"
                     type="button"
                   >
                     {saveStatus === "saving" ? "Saving…" : "Save changes"}
@@ -278,50 +285,27 @@ export default function TodayPageClient() {
 
         {/* Right: Program + Meal (editable only for trainer) */}
         <div style={{ display: "grid", gap: 12 }}>
-          <section className="t-card">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h3 style={{ margin: 0 }}>Today’s Program</h3>
-              <span style={{ fontSize: 12, opacity: 0.75 }}>{selected}</span>
+          <section className="t-card t-card--hoverable">
+            <div className="t-section-head" style={{ alignItems: "center" }}>
+              <h3 style={{ margin: 0 }}>Program</h3>
+              <span className="t-chip" style={{ marginLeft: "auto" }}>{selected}</span>
             </div>
 
             <textarea
               value={plan.program}
-              onChange={(e) =>
-                setPlan((p) => ({ ...p, program: e.target.value }))
-              }
+              onChange={(e) => setPlan((p) => ({ ...p, program: e.target.value }))}
               placeholder={isTrainer ? "Write the workout plan here…" : "View only"}
               readOnly={!isTrainer}
               rows={10}
-              style={{
-                marginTop: 10,
-                width: "100%",
-                background: "#0f1420",
-                color: "#fff",
-                border: "1px solid var(--cardBorder)",
-                borderRadius: 10,
-                padding: 10,
-                resize: "vertical",
-                ...readonlyStyle,
-              }}
+              className="t-textarea"
+              style={{ marginTop: 10, ...readonlyStyle }}
             />
           </section>
 
-          <section className="t-card">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h3 style={{ margin: 0 }}>Today’s Meal</h3>
-              <span style={{ fontSize: 12, opacity: 0.75 }}>{selected}</span>
+          <section className="t-card t-card--hoverable">
+            <div className="t-section-head">
+              <h3 style={{ margin: 0 }}>Meal</h3>
+              <span className="t-chip">{selected}</span>
             </div>
 
             <textarea
@@ -330,17 +314,8 @@ export default function TodayPageClient() {
               placeholder={isTrainer ? "Write the meal plan here…" : "View only"}
               readOnly={!isTrainer}
               rows={8}
-              style={{
-                marginTop: 10,
-                width: "100%",
-                background: "#0f1420",
-                color: "#fff",
-                border: "1px solid var(--cardBorder)",
-                borderRadius: 10,
-                padding: 10,
-                resize: "vertical",
-                ...readonlyStyle,
-              }}
+              className="t-textarea"
+              style={{ marginTop: 10, ...readonlyStyle }}
             />
           </section>
         </div>

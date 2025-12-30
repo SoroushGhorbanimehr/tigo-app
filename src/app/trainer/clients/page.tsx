@@ -8,6 +8,7 @@ import { listTrainees, Trainee } from "@/lib/traineeRepo";
 export default function TrainerClientsPage() {
   const [trainees, setTrainees] = useState<Trainee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trainerName, setTrainerName] = useState<string>("Tigo");
 
   useEffect(() => {
     let cancelled = false;
@@ -23,6 +24,14 @@ export default function TrainerClientsPage() {
 
     load();
 
+    // read persisted trainer name
+    try {
+      if (typeof window !== "undefined") {
+        const n = localStorage.getItem("trainerName");
+        if (n) setTrainerName(n);
+      }
+    } catch {}
+
     return () => {
       cancelled = true;
     };
@@ -32,6 +41,7 @@ export default function TrainerClientsPage() {
     <div className="t-root">
       <header className="t-header">
         <h1 className="t-title">Coach TIGO – Trainees</h1>
+            <div style={{ marginTop: 4, fontSize: 14, opacity: 0.95 }}>Welcome back, {trainerName}</div>
             <Link href="/trainer" style={{ textDecoration: "underline", opacity: 0.9 }}>
               ← Back to dashboard
             </Link>

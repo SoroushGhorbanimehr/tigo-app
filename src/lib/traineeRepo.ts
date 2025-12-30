@@ -46,3 +46,18 @@ export async function listTrainees(): Promise<Trainee[]> {
 
   return (data ?? []) as Trainee[];
 }
+
+export async function getTraineeById(id: string): Promise<Trainee | null> {
+  const { data, error } = await supabase
+    .from("trainees")
+    .select("id, full_name, email")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching trainee by id", error);
+    return null;
+  }
+
+  return (data as Trainee) ?? null;
+}
