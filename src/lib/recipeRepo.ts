@@ -10,6 +10,11 @@ export type Recipe = {
   created_at: string;
 };
 
+export type RecipeImage = {
+  path: string;
+  publicUrl: string;
+};
+
 function slugify(input: string) {
   return input
     .trim()
@@ -111,4 +116,48 @@ export async function uploadRecipeImage(recipeId: string, file: File) {
     );
   }
   return publicUrl;
+}
+
+/**
+ * Album helpers: list, upload, and delete images for a recipe album in storage.
+ * Paths are under recipes/{recipeId}/album/
+ */
+export async function listRecipeAlbumImages(recipeId: string): Promise<RecipeImage[]> {
+  const prefix = `recipes/${recipeId}/album`;
+  const { data, error } = await supabase.storage
+    .from("recipe-images")
+    .list(prefix, { limit: 100 });
+  if (error) throw new Error(error.message);
+  const files = data || [];
+  // Map to full paths and public URLs
+  return files
+    .filter((f) => !f.name.endsWith("/"))
+    .map((f) => {
+      const path = `${prefix}/${f.name}`;
+      const { data } = supabase.storage.from("recipe-images").getPublicUrl(path);
+      return { path, publicUrl: data.publicUrl } as RecipeImage;
+    });
+}
+
+export async function uploadRecipeGalleryImages(recipeId: string, files: File[]): Promise<RecipeImage[]> {
+  const results: RecipeImage[] = [];
+  for (const file of files) {
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const path = `recipes/${recipeId}/album/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("recipe-images")
+      .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type || `image/${ext}` });
+    if (upErr) throw upErr;
+    const { data } = supabase.storage.from("recipe-images").getPublicUrl(path);
+    results.push({ path, publicUrl: data.publicUrl });
+  }
+  return results;
+}
+
+export async function deleteRecipeGalleryImage(recipeId: string, path: string): Promise<void> {
+  // Ensure path belongs to recipe for safety
+  const expectedPrefix = `recipes/${recipeId}/album/`;
+  if (!path.startsWith(expectedPrefix)) throw new Error("Invalid image path for recipe");
+  const { error } = await supabase.storage.from("recipe-images").remove([path]);
+  if (error) throw new Error(error.message);
 }

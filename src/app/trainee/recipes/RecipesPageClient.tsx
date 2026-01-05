@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createRecipe, listRecipes, updateRecipe, uploadRecipeImage, deleteRecipe, type Recipe } from "@/lib/recipeRepo";
+import { createRecipe, listRecipes, updateRecipe, uploadRecipeImage, deleteRecipe, uploadRecipeGalleryImages, listRecipeAlbumImages, deleteRecipeGalleryImage, type Recipe, type RecipeImage } from "@/lib/recipeRepo";
 
 export default function RecipesPageClient() {
   const sp = useSearchParams();
@@ -21,6 +21,7 @@ export default function RecipesPageClient() {
   const [msg, setMsg] = useState("");
   const [toast, setToast] = useState("");
   const toastTimer = useRef<number | null>(null);
+  const createDescRef = useRef<HTMLTextAreaElement | null>(null);
   const showToast = useCallback((message: string, ms = 1800) => {
     setToast(message);
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -88,6 +89,41 @@ export default function RecipesPageClient() {
     }
   }
 
+  function insertAtCursor(
+    el: HTMLTextAreaElement | null,
+    value: string,
+    setValue: React.Dispatch<React.SetStateAction<string>>
+  ) {
+    if (!el) {
+      setValue((prev) => (prev || "") + value);
+      return;
+    }
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const prev = el.value;
+    const next = prev.slice(0, start) + value + prev.slice(end);
+    setValue(next);
+    // move caret to end of inserted text
+    requestAnimationFrame(() => {
+      const pos = start + value.length;
+      el.selectionStart = el.selectionEnd = pos;
+      el.focus();
+    });
+  }
+
+  const ING_STEPS_TEMPLATE = "## Ingredients\n- \n- \n\n## Steps\n1. \n2. \n";
+
+  function onCreateInsertTemplate() {
+    insertAtCursor(createDescRef.current, `\n${ING_STEPS_TEMPLATE}`, setDesc);
+    showToast("Inserted Ingredients/Steps");
+  }
+  function onCreateInsertImage() {
+    const url = window.prompt("Image URL (https://…)")?.trim();
+    if (!url) return;
+    insertAtCursor(createDescRef.current, `\n![image](${url})\n`, setDesc);
+    showToast("Inserted image");
+  }
+
   return (
     <div className="t-root">
       {/* Toast */}
@@ -135,7 +171,13 @@ export default function RecipesPageClient() {
               placeholder="Title (e.g., Grilled Chicken Bowl)"
               style={inputStyle}
             />
+            <div className="t-editor-toolbar" style={{ marginTop: 8 }}>
+              <button type="button" className="t-toolbtn" onClick={onCreateInsertTemplate}>+ Ingredients/Steps</button>
+              <button type="button" className="t-toolbtn" onClick={onCreateInsertImage}>+ Image</button>
+            </div>
+
             <textarea
+              ref={createDescRef}
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               placeholder="Preparation steps / notes"
@@ -211,6 +253,24 @@ function TrainerControls(props: { r: Recipe; onUpdated: () => Promise<void> }) {
   const [desc, setDesc] = useState(r.description ?? "");
   const [msg, setMsg] = useState("");
   const [imageJustUploaded, setImageJustUploaded] = useState(false);
+  const editDescRef = useRef<HTMLTextAreaElement | null>(null);
+  const [albumOpen, setAlbumOpen] = useState(false);
+  const [album, setAlbum] = useState<RecipeImage[]>([]);
+  const [albumBusy, setAlbumBusy] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    async function load() {
+      try {
+        const rows = await listRecipeAlbumImages(r.id);
+        if (!cancel) setAlbum(rows);
+      } catch {
+        if (!cancel) setAlbum([]);
+      }
+    }
+    load();
+    return () => { cancel = true; };
+  }, [r.id]);
 
   function toast(message: string) {
     document.dispatchEvent(new CustomEvent("recipes-toast", { detail: message }));
@@ -273,7 +333,172 @@ function TrainerControls(props: { r: Recipe; onUpdated: () => Promise<void> }) {
   return (
     <div style={{ width: 360, maxWidth: "45%", display: "grid", gap: 8 }}>
       <input value={title} onChange={(e) => setTitle(e.target.value)} style={miniInputStyle} />
-      <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} style={{ ...miniInputStyle, resize: "vertical" }} />
+      <div className="t-editor-toolbar">
+        <button
+          type="button"
+          className="t-toolbtn"
+          onClick={() => {
+            const tmpl = "## Ingredients\n- \n- \n\n## Steps\n1. \n2. \n";
+            if (!editDescRef.current) setDesc((d) => (d || "") + "\n" + tmpl);
+            else {
+              const el = editDescRef.current;
+              const start = el.selectionStart ?? el.value.length;
+              const end = el.selectionEnd ?? el.value.length;
+              const prev = el.value;
+              const next = prev.slice(0, start) + "\n" + tmpl + prev.slice(end);
+              setDesc(next);
+              requestAnimationFrame(() => {
+                const pos = start + ("\n" + tmpl).length;
+                el.selectionStart = el.selectionEnd = pos;
+                el.focus();
+              });
+            }
+            document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Inserted Ingredients/Steps" }));
+          }}
+        >
+          + Ingredients/Steps
+        </button>
+        <button
+          type="button"
+          className="t-toolbtn"
+          onClick={() => {
+            const url = window.prompt("Image URL (https://…)")?.trim();
+            if (!url) return;
+            const insert = `\n![image](${url})\n`;
+            if (!editDescRef.current) setDesc((d) => (d || "") + insert);
+            else {
+              const el = editDescRef.current;
+              const start = el.selectionStart ?? el.value.length;
+              const end = el.selectionEnd ?? el.value.length;
+              const prev = el.value;
+              const next = prev.slice(0, start) + insert + prev.slice(end);
+              setDesc(next);
+              requestAnimationFrame(() => {
+                const pos = start + insert.length;
+                el.selectionStart = el.selectionEnd = pos;
+                el.focus();
+              });
+            }
+            document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Inserted image" }));
+          }}
+        >
+          + Image
+        </button>
+      </div>
+      <textarea ref={editDescRef} value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} style={{ ...miniInputStyle, resize: "vertical" }} />
+
+      {/* Album manager toggle */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          onClick={() => setAlbumOpen((v) => !v)}
+          style={{ ...miniButtonStyle }}
+          type="button"
+        >
+          {albumOpen ? "Hide images" : "Manage images"}
+        </button>
+        <label style={{ ...miniButtonStyle, display: "inline-block", cursor: "pointer" }}>
+          Upload to album
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const files = Array.from(e.target.files ?? []);
+              if (files.length === 0) return;
+              setAlbumBusy(true);
+              try {
+                const uploaded = await uploadRecipeGalleryImages(r.id, files);
+                setAlbum((a) => [...uploaded, ...a]);
+                document.dispatchEvent(new CustomEvent("recipes-toast", { detail: files.length > 1 ? "Images uploaded" : "Image uploaded" }));
+              } catch (err) {
+                document.dispatchEvent(new CustomEvent("recipes-toast", { detail: err instanceof Error ? err.message : "Upload failed" }));
+              } finally {
+                setAlbumBusy(false);
+                e.currentTarget.value = ""; // reset input
+              }
+            }}
+          />
+        </label>
+      </div>
+
+      {albumOpen && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+          {album.length === 0 && <div style={{ opacity: 0.8 }}>No images yet.</div>}
+          {album.map((img) => (
+            <div key={img.path} className="t-card" style={{ padding: 8 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.publicUrl} alt="recipe" style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 8 }} />
+              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  style={miniButtonStyle}
+                  onClick={() => {
+                    const insert = `\n![image](${img.publicUrl})\n`;
+                    if (!editDescRef.current) {
+                      setDesc((d) => (d || "") + insert);
+                    } else {
+                      const el = editDescRef.current;
+                      const start = el.selectionStart ?? el.value.length;
+                      const end = el.selectionEnd ?? el.value.length;
+                      const prev = el.value;
+                      const next = prev.slice(0, start) + insert + prev.slice(end);
+                      setDesc(next);
+                      requestAnimationFrame(() => {
+                        const pos = start + insert.length;
+                        el.selectionStart = el.selectionEnd = pos;
+                        el.focus();
+                      });
+                    }
+                    document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Inserted image" }));
+                  }}
+                >
+                  Insert
+                </button>
+                <button
+                  type="button"
+                  style={miniButtonStyle}
+                  onClick={async () => {
+                    setSaving(true);
+                    setMsg("");
+                    try {
+                      await updateRecipe(r.id, { image_url: img.publicUrl });
+                      await onUpdated();
+                      document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Set as main" }));
+                    } catch (e: unknown) {
+                      setMsg(e instanceof Error ? e.message : "Failed to set main");
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                >
+                  Set main
+                </button>
+                <button
+                  type="button"
+                  style={{ ...miniButtonStyle, background: "#7f1d1d", borderColor: "#991b1b" }}
+                  disabled={albumBusy}
+                  onClick={async () => {
+                    if (!window.confirm("Delete this image?")) return;
+                    setAlbumBusy(true);
+                    try {
+                      await deleteRecipeGalleryImage(r.id, img.path);
+                      setAlbum((a) => a.filter((x) => x.path !== img.path));
+                      document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Image deleted" }));
+                    } catch (e) {
+                      document.dispatchEvent(new CustomEvent("recipes-toast", { detail: e instanceof Error ? e.message : "Delete failed" }));
+                    } finally {
+                      setAlbumBusy(false);
+                    }
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <button onClick={saveMeta} disabled={saving} style={miniButtonStyle}>
