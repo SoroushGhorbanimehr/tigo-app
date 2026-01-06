@@ -18,16 +18,19 @@ export default function TraineeLoginPage() {
     setErrorMsg("");
 
     try {
-      // Hash password client-side to avoid transmitting/storing plaintext
+      // Backward-compatible login: accept either plaintext or SHA-256 hashed passwords
+      const plain = password.trim();
       const enc = new TextEncoder();
-      const bytes = enc.encode(password.trim());
+      const bytes = enc.encode(plain);
       const buf = await crypto.subtle.digest("SHA-256", bytes);
       const hash = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
       const { data, error } = await supabase
         .from("trainees")
         .select("*")
         .eq("email", email.trim())
-        .eq("password", hash)
+        // Match rows where password is either the plaintext (old) or the hash (new)
+        .in("password", [plain, hash])
         .maybeSingle();
 
       if (error) {
