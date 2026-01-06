@@ -24,55 +24,117 @@ export default function RecipePage() {
       .replace(/'/g, "&#039;");
   }
 
-  // Minimal Markdown renderer for headings, bold, italics, lists, code blocks
-  function mdToHtml(md: string) {
+  // Markdown renderer for headings, bold, italics, lists (UL/OL), code, images, links, blockquotes -> callouts.
+  function mdToHtml(md: string, opts?: { ingredients?: boolean; steps?: boolean }) {
     const lines = md.replace(/\r\n?/g, "\n").split("\n");
-    const html: string[] = [];
+    const out: string[] = [];
+    let i = 0;
     let inCode = false;
-    for (const raw of lines) {
+    let listType: null | "ul" | "ol" = null;
+    let listItems: string[] = [];
+
+    function flushList() {
+      if (!listType || listItems.length === 0) return;
+      if (listType === "ul") {
+        out.push(`<ul>` + listItems.join("") + `</ul>`);
+      } else {
+        out.push(`<ol class=\"t-steps\">` + listItems.join("") + `</ol>`);
+      }
+      listType = null;
+      listItems = [];
+    }
+
+    while (i < lines.length) {
+      const raw = lines[i++];
       const line = raw;
-      if (line.trim().startsWith("```") || line.trim().startsWith("~~~")) {
+      const trimmed = line.trim();
+
+      // code fences
+      if (/^(```|~~~)/.test(trimmed)) {
+        flushList();
         inCode = !inCode;
-        html.push(inCode ? '<pre><code>' : '</code></pre>');
+        out.push(inCode ? `<pre><code>` : `</code></pre>`);
         continue;
       }
       if (inCode) {
-        html.push(escapeHtml(line) + "\n");
+        out.push(escapeHtml(line) + "\n");
+        continue;
+      }
+
+      // blockquote -> callout
+      if (/^>\s?/.test(trimmed)) {
+        flushList();
+        const bq: string[] = [];
+        bq.push(trimmed.replace(/^>\s?/, ""));
+        while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+          bq.push(lines[i].trim().replace(/^>\s?/, ""));
+          i++;
+        }
+        const first = bq[0] ?? "";
+        let variant: "tip" | "note" | "warn" | null = null;
+        let text = bq.join("\n");
+        if (/^tip\s*:/i.test(first)) { variant = "tip"; text = text.replace(/^tip\s*:/i, "").trim(); }
+        else if (/^note\s*:/i.test(first)) { variant = "note"; text = text.replace(/^note\s*:/i, "").trim(); }
+        else if (/^(warn|warning)\s*:/i.test(first)) { variant = "warn"; text = text.replace(/^(warn|warning)\s*:/i, "").trim(); }
+        const inner = inlineMd(text);
+        out.push(`<blockquote class=\"t-callout${variant ? ` t-callout--${variant}` : ""}\">${inner}</blockquote>`);
         continue;
       }
 
       // headings
-      const h = /^(#{1,6})\s+(.*)$/.exec(line);
+      const h = /^(#{1,6})\s+(.*)$/.exec(trimmed);
       if (h) {
+        flushList();
         const lvl = h[1].length;
-        html.push(`<h${lvl}>${inlineMd(h[2])}</h${lvl}>`);
+        out.push(`<h${lvl}>${inlineMd(h[2])}</h${lvl}>`);
         continue;
       }
-      // list item
+
+      // unordered list
       if (/^\s*[-*+]\s+/.test(line)) {
-        const content = line.replace(/^\s*[-*+]\s+/, "");
-        html.push(`<li>${inlineMd(content)}</li>`);
+        const body = line.replace(/^\s*[-*+]\s+/, "");
+        if (listType !== "ul") {
+          flushList();
+          listType = "ul";
+        }
+        // checkbox pattern
+        const m = body.match(/^\[( |x|X)\]\s+(.*)$/);
+        if (m) {
+          const checked = m[1].toLowerCase() === "x";
+          const label = inlineMd(m[2]);
+          listItems.push(`<li><label class=\"t-md-check\"><input type=\"checkbox\" disabled ${checked ? "checked" : ""}/> ${label}</label></li>`);
+        } else if (opts?.ingredients) {
+          // auto-checkbox for ingredients
+          const label = inlineMd(body);
+          listItems.push(`<li><label class=\"t-md-check\"><input type=\"checkbox\" disabled /> ${label}</label></li>`);
+        } else {
+          listItems.push(`<li>${inlineMd(body)}</li>`);
+        }
         continue;
       }
+
+      // ordered list (1. or 1-)
+      if (/^\s*\d+[.\-]\s+/.test(line)) {
+        const body = line.replace(/^\s*\d+[.\-]\s+/, "");
+        if (listType !== "ol") {
+          flushList();
+          listType = "ol";
+        }
+        listItems.push(`<li>${inlineMd(body)}</li>`);
+        continue;
+      }
+
       // paragraph or blank
-      if (line.trim() === "") {
-        html.push("");
+      if (trimmed === "") {
+        flushList();
+        out.push("");
       } else {
-        html.push(`<p>${inlineMd(line)}</p>`);
+        flushList();
+        out.push(`<p>${inlineMd(line)}</p>`);
       }
     }
-    // wrap <li> into <ul>
-    const joined = html.join("\n");
-    const ulWrapped = joined.replace(/(?:^(?:<li>.*<\/li>)(?:\n|$))+?/gm, (block) => {
-      const items = block.trim();
-      if (!items) return block;
-      const lines = items.split(/\n/).filter(Boolean);
-      if (lines.every((l) => l.startsWith("<li>"))) {
-        return `<ul>\n${lines.join("\n")}\n</ul>`;
-      }
-      return block;
-    });
-    return ulWrapped;
+    flushList();
+    return out.join("\n");
   }
 
   function inlineMd(s: string) {
@@ -278,11 +340,11 @@ export default function RecipePage() {
                     <div className="t-grid-2" style={{ marginTop: 12 }}>
                       <section className="t-col">
                         <h3 style={{ margin: 0 }}>Ingredients</h3>
-                        <div className="t-md" dangerouslySetInnerHTML={{ __html: mdToHtml(ingredients!) }} />
+                        <div className="t-md" dangerouslySetInnerHTML={{ __html: mdToHtml(ingredients!, { ingredients: true }) }} />
                       </section>
                       <section className="t-col">
                         <h3 style={{ margin: 0 }}>Steps</h3>
-                        <div className="t-md" dangerouslySetInnerHTML={{ __html: mdToHtml(steps!) }} />
+                        <div className="t-md" dangerouslySetInnerHTML={{ __html: mdToHtml(steps!, { steps: true }) }} />
                       </section>
                     </div>
                     {rest && rest.trim().length > 0 && (

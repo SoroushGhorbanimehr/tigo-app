@@ -18,11 +18,16 @@ export default function TraineeLoginPage() {
     setErrorMsg("");
 
     try {
+      // Hash password client-side to avoid transmitting/storing plaintext
+      const enc = new TextEncoder();
+      const bytes = enc.encode(password.trim());
+      const buf = await crypto.subtle.digest("SHA-256", bytes);
+      const hash = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
       const { data, error } = await supabase
         .from("trainees")
         .select("*")
         .eq("email", email.trim())
-        .eq("password", password.trim())
+        .eq("password", hash)
         .maybeSingle();
 
       if (error) {

@@ -111,7 +111,7 @@ export default function RecipesPageClient() {
     });
   }
 
-  const ING_STEPS_TEMPLATE = "## Ingredients\n- \n- \n\n## Steps\n1. \n2. \n";
+  const ING_STEPS_TEMPLATE = "## Ingredients\n- \n- \n\n## Steps\n1- \n2- \n";
 
   function onCreateInsertTemplate() {
     insertAtCursor(createDescRef.current, `\n${ING_STEPS_TEMPLATE}`, setDesc);
@@ -174,6 +174,54 @@ export default function RecipesPageClient() {
             <div className="t-editor-toolbar" style={{ marginTop: 8 }}>
               <button type="button" className="t-toolbtn" onClick={onCreateInsertTemplate}>+ Ingredients/Steps</button>
               <button type="button" className="t-toolbtn" onClick={onCreateInsertImage}>+ Image</button>
+              <button
+                type="button"
+                className="t-toolbtn"
+                onClick={() => {
+                  const insert = "\n1- Step one\n2- Step two\n3- Step three\n";
+                  if (!createDescRef.current) setDesc((d) => (d || "") + insert);
+                  else {
+                    const el = createDescRef.current;
+                    const start = el.selectionStart ?? el.value.length;
+                    const end = el.selectionEnd ?? el.value.length;
+                    const prev = el.value;
+                    const next = prev.slice(0, start) + insert + prev.slice(end);
+                    setDesc(next);
+                    requestAnimationFrame(() => {
+                      const pos = start + insert.length;
+                      el.selectionStart = el.selectionEnd = pos;
+                      el.focus();
+                    });
+                  }
+                  showToast("Inserted steps");
+                }}
+              >
+                + Steps (1-)
+              </button>
+              <button
+                type="button"
+                className="t-toolbtn"
+                onClick={() => {
+                  const insert = "\n> Tip: Use fresh herbs for best flavor.\n";
+                  if (!createDescRef.current) setDesc((d) => (d || "") + insert);
+                  else {
+                    const el = createDescRef.current;
+                    const start = el.selectionStart ?? el.value.length;
+                    const end = el.selectionEnd ?? el.value.length;
+                    const prev = el.value;
+                    const next = prev.slice(0, start) + insert + prev.slice(end);
+                    setDesc(next);
+                    requestAnimationFrame(() => {
+                      const pos = start + insert.length;
+                      el.selectionStart = el.selectionEnd = pos;
+                      el.focus();
+                    });
+                  }
+                  showToast("Inserted tip");
+                }}
+              >
+                + Tip
+              </button>
             </div>
 
             <textarea
@@ -338,7 +386,7 @@ function TrainerControls(props: { r: Recipe; onUpdated: () => Promise<void> }) {
           type="button"
           className="t-toolbtn"
           onClick={() => {
-            const tmpl = "## Ingredients\n- \n- \n\n## Steps\n1. \n2. \n";
+            const tmpl = "## Ingredients\n- \n- \n\n## Steps\n1- \n2- \n";
             if (!editDescRef.current) setDesc((d) => (d || "") + "\n" + tmpl);
             else {
               const el = editDescRef.current;
@@ -383,6 +431,56 @@ function TrainerControls(props: { r: Recipe; onUpdated: () => Promise<void> }) {
           }}
         >
           + Image
+        </button>
+      </div>
+      <div className="t-editor-toolbar" style={{ marginTop: 6 }}>
+        <button
+          type="button"
+          className="t-toolbtn"
+          onClick={() => {
+            const insert = "\n1- Step one\n2- Step two\n3- Step three\n";
+            if (!editDescRef.current) setDesc((d) => (d || "") + insert);
+            else {
+              const el = editDescRef.current;
+              const start = el.selectionStart ?? el.value.length;
+              const end = el.selectionEnd ?? el.value.length;
+              const prev = el.value;
+              const next = prev.slice(0, start) + insert + prev.slice(end);
+              setDesc(next);
+              requestAnimationFrame(() => {
+                const pos = start + insert.length;
+                el.selectionStart = el.selectionEnd = pos;
+                el.focus();
+              });
+            }
+            document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Inserted steps" }));
+          }}
+        >
+          + Steps (1-)
+        </button>
+        <button
+          type="button"
+          className="t-toolbtn"
+          onClick={() => {
+            const insert = "\n> Tip: Use fresh herbs for best flavor.\n";
+            if (!editDescRef.current) setDesc((d) => (d || "") + insert);
+            else {
+              const el = editDescRef.current;
+              const start = el.selectionStart ?? el.value.length;
+              const end = el.selectionEnd ?? el.value.length;
+              const prev = el.value;
+              const next = prev.slice(0, start) + insert + prev.slice(end);
+              setDesc(next);
+              requestAnimationFrame(() => {
+                const pos = start + insert.length;
+                el.selectionStart = el.selectionEnd = pos;
+                el.focus();
+              });
+            }
+            document.dispatchEvent(new CustomEvent("recipes-toast", { detail: "Inserted tip" }));
+          }}
+        >
+          + Tip
         </button>
       </div>
       <textarea ref={editDescRef} value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} style={{ ...miniInputStyle, resize: "vertical" }} />

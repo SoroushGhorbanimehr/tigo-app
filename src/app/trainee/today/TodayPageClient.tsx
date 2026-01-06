@@ -349,6 +349,7 @@ export default function TodayPageClient() {
         <button className="t-toolbtn" type="button" title="Code" onClick={() => wrapSelection(refEl, "`", "`")}>Code</button>
         <button className="t-toolbtn" type="button" title="Bulleted list" onClick={() => insert(refEl, ("\n- "))}>•</button>
         <button className="t-toolbtn" type="button" title="Numbered list" onClick={() => insert(refEl, ("\n1. "))}>1.</button>
+        <button className="t-toolbtn" type="button" title="Steps (1- style)" onClick={() => insert(refEl, ("\n1- Warm-up\n2- Main set\n3- Cool down\n"))}>Steps</button>
         <button className="t-toolbtn" type="button" title="Checklist" onClick={() => insert(refEl, ("\n- [ ] "))}>☑</button>
         <button className="t-toolbtn" type="button" title="Link" onClick={() => insert(refEl, ("[text](https://)"))}>🔗</button>
         <span style={{ width: 8 }} />
@@ -405,7 +406,6 @@ export default function TodayPageClient() {
                 <button
                   type="button"
                   onClick={() => setViewMode("week")}
-                  aria-pressed={viewMode === "week"}
                   role="tab"
                   aria-selected={viewMode === "week"}
                   className="t-segment-btn"
@@ -417,7 +417,6 @@ export default function TodayPageClient() {
                 <button
                   type="button"
                   onClick={() => setViewMode("month")}
-                  aria-pressed={viewMode === "month"}
                   role="tab"
                   aria-selected={viewMode === "month"}
                   className="t-segment-btn"

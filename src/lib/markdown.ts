@@ -100,21 +100,21 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // ordered list
-    if (/^\s*\d+\.\s+/.test(line)) {
+    // ordered list (supports `1.` and `1-`)
+    if (/^\s*\d+[.\-]\s+/.test(line)) {
       const items: string[] = [];
       items.push(line);
-      while (i < n && /^\s*\d+\.\s+/.test(lines[i])) {
+      while (i < n && /^\s*\d+[.\-]\s+/.test(lines[i])) {
         items.push(lines[i]);
         i++;
       }
       const li = items
         .map((it) => {
-          const m = it.match(/^\s*\d+\.\s+(.*)$/)!;
+          const m = it.match(/^\s*\d+[.\-]\s+(.*)$/)!;
           return `<li>${inlineFormat(escapeHtml(m[1]))}</li>`;
         })
         .join("");
-      html += `<ol>${li}</ol>`;
+      html += `<ol class="t-steps">${li}</ol>`;
       continue;
     }
 
@@ -140,4 +140,3 @@ export function renderMarkdown(md: string): string {
 
   return html;
 }
-
