@@ -460,7 +460,51 @@ async function compressImageToDataURL(file: File, maxW = 960, quality = 0.82): P
   return canvas.toDataURL("image/jpeg", quality);
 }
 
+function PaywallOverlay() {
+  const [navH, setNavH] = useState<number>(64);
+  useEffect(() => {
+    const measure = () => {
+      const el = document.querySelector<HTMLElement>(".t-bottomnav");
+      if (el) setNavH(el.getBoundingClientRect().height);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: navH,
+          zIndex: 9998,
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          background:
+            "radial-gradient(600px 200px at 50% 20%, rgba(255,255,255,0.06), transparent), rgba(0,0,0,0.35)",
+          display: "grid",
+          placeItems: "center",
+          padding: 16,
+          pointerEvents: "auto",
+        } as React.CSSProperties}
+      >
+        <div className="t-card" style={{ textAlign: "center", maxWidth: 520 }}>
+          <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: -0.3 }}>Get Premium</div>
+          <div style={{ marginTop: 8, fontSize: 14, opacity: 0.85 }}>
+            Unlock the full Progress dashboard — coming soon.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProgressPage() {
+  const isPremium = false; // later: SSR gate; for now, blur content + overlay when false
   const [tab, setTab] = useState<
     "overview" | "log" | "goals" | "habits" | "photos" | "measurements" | "strength"
   >("overview");
@@ -493,6 +537,8 @@ export default function ProgressPage() {
     setPhotosState(getOrSeedPhotos().sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()));
     setMeasuresState(getOrSeedMeasurements().sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()));
     setStrengthState(getOrSeedStrength().sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()));
+
+    // no-op
   }, []);
 
   useEffect(() => {
@@ -500,6 +546,8 @@ export default function ProgressPage() {
       if (toastTimer.current) window.clearTimeout(toastTimer.current);
     };
   }, []);
+
+  // Note: do not change body/html overflow to avoid nav flicker
 
   // ---------- derived (weight) ----------
   const sortedAscW = useMemo(() => [...rows].sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()), [rows]);
@@ -978,6 +1026,8 @@ export default function ProgressPage() {
 
   return (
     <>
+      {!isPremium && <PaywallOverlay />}
+      <div style={!isPremium ? { filter: "blur(8px)", pointerEvents: "none" } : undefined} aria-hidden={!isPremium}>
       {/* Header */}
       <div className="t-card" style={{ marginBottom: 12, position: "relative", overflow: "hidden" }}>
         <div
@@ -2062,6 +2112,7 @@ export default function ProgressPage() {
           box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.12);
         }
       `}</style>
+      </div>
     </>
   );
 }
