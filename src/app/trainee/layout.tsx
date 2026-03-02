@@ -8,7 +8,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const hideNav = pathname === "/trainee/login";
+  const hideNav = pathname === "/trainee/login" || pathname === "/trainee/register";
 
   return (
     <main className="t-shell">

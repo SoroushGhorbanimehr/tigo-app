@@ -97,7 +97,7 @@ function TranslatableMain({ revealed }: { revealed: boolean }) {
             marginBottom: "1.25rem",
           }}
         >
-          {t("selectRole")}
+          {t("authPrompt")}
         </p>
 
         <div
@@ -109,7 +109,7 @@ function TranslatableMain({ revealed }: { revealed: boolean }) {
           }}
         >
           <Link
-            href="/trainee/login"
+            href="/login"
             className="t-role-card"
             style={{
               padding: "0.9rem 1.4rem",
@@ -122,11 +122,11 @@ function TranslatableMain({ revealed }: { revealed: boolean }) {
               WebkitBackdropFilter: "blur(4px)",
             }}
           >
-            {t("client")}
+            {t("signIn")}
           </Link>
 
           <Link
-            href="/trainer/login"
+            href="/trainee/register"
             className="t-role-card"
             style={{
               padding: "0.9rem 1.4rem",
@@ -139,7 +139,7 @@ function TranslatableMain({ revealed }: { revealed: boolean }) {
               WebkitBackdropFilter: "blur(4px)",
             }}
           >
-            {t("trainer")}
+            {t("signUp")}
           </Link>
         </div>
 

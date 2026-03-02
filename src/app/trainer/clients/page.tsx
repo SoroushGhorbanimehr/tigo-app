@@ -82,6 +82,19 @@ export default function TrainerClientsPage() {
     return arr;
   }, [trainees, query, sortBy, sortDir]);
 
+  const stats = useMemo(() => {
+    const total = trainees.length;
+    const now = Date.now();
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const recent = trainees.filter((t) => {
+      if (!t.created_at) return false;
+      const ts = new Date(t.created_at).getTime();
+      return now - ts <= weekMs;
+    }).length;
+    const withEmail = trainees.filter((t) => !!t.email).length;
+    return { total, recent, withEmail };
+  }, [trainees]);
+
   function initials(name: string) {
     const parts = name.trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
@@ -98,45 +111,45 @@ export default function TrainerClientsPage() {
 
   return (
     <div className="t-root">
-      <header className="t-header">
-        <h1 className="t-title">Coach TIGO – Trainees</h1>
-            <div style={{ marginTop: 4, fontSize: 14, opacity: 0.95 }}>Welcome back, {trainerName}</div>
-            <Link href="/trainer" style={{ textDecoration: "underline", opacity: 0.9 }}>
-              ← Back to dashboard
-            </Link>
-      </header>
-        <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-          <Link
-            href="/trainer/clients"
-            style={{
-              padding: ".65rem 1rem",
-              borderRadius: "10px",
-              fontWeight: 800,
-              textDecoration: "none",
-              border: "1px solid rgba(255,255,255,0.25)",
-              background: "rgba(255,255,255,0.06)",
-            }}
-          >
-            Trainees (real table)
-          </Link>
-
-          <Link
-            href="/trainee/programs?mode=trainer"
-            style={{
-              padding: ".65rem 1rem",
-              borderRadius: "10px",
-              fontWeight: 800,
-              textDecoration: "none",
-              border: "1px solid rgba(255,255,255,0.25)",
-              background: "rgba(255,255,255,0.06)",
-            }}
-          >
-            Exercise Library
+      <header className="t-header" style={{
+        background: "linear-gradient(180deg, rgba(31,41,55,0.7), transparent)",
+        borderRadius: 12,
+        paddingBottom: 16,
+      }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <h1 className="t-title" style={{ marginBottom: 6 }}>Coach TIGO – Clients</h1>
+            <div style={{ fontSize: 14, opacity: 0.95 }}>Welcome back, <strong>{trainerName}</strong></div>
+          </div>
+          <Link href="/trainer" className="t-link" style={{ opacity: 0.9, alignSelf: "center" }}>
+            ← Back to dashboard
           </Link>
         </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+          <Link href="/trainer/clients" className="t-btn t-btn--ghost" style={{ textDecoration: "none" }}>Trainees</Link>
+          <Link href="/trainee/programs?mode=trainer" className="t-btn t-btn--ghost" style={{ textDecoration: "none" }}>Exercise Library</Link>
+          <Link href="/trainee/recipes?mode=trainer" className="t-btn t-btn--ghost" style={{ textDecoration: "none" }}>Recipe Library</Link>
+        </div>
+      </header>
+
+      {/* Stats */}
+      <section className="t-today-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", marginBottom: 12 }}>
+        <div className="t-card">
+          <div style={{ fontSize: 12, opacity: 0.8 }}>Total Trainees</div>
+          <div style={{ fontSize: 28, fontWeight: 900 }}>{stats.total}</div>
+        </div>
+        <div className="t-card">
+          <div style={{ fontSize: 12, opacity: 0.8 }}>Joined This Week</div>
+          <div style={{ fontSize: 28, fontWeight: 900 }}>{stats.recent}</div>
+        </div>
+        <div className="t-card">
+          <div style={{ fontSize: 12, opacity: 0.8 }}>With Email</div>
+          <div style={{ fontSize: 28, fontWeight: 900 }}>{stats.withEmail}</div>
+        </div>
+      </section>
       <div className="t-card" style={{ overflowX: "auto" }}>
         {/* Controls */}
-        <div className="t-row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+        <div className="t-row" style={{ justifyContent: "space-between", marginBottom: 12, gap: 10, flexWrap: "wrap" }}>
           <div style={{ fontSize: 13, opacity: 0.9 }}>
             {loading ? "Loading…" : `${filteredSorted.length} trainee${filteredSorted.length === 1 ? "" : "s"}`}
           </div>
@@ -147,13 +160,13 @@ export default function TrainerClientsPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               style={{
-                width: 260,
+                width: 280,
                 maxWidth: "100%",
                 background: "#0f1420",
                 color: "#e6ebff",
                 border: "1px solid var(--cardBorder)",
-                borderRadius: 10,
-                padding: "8px 10px",
+                borderRadius: 999,
+                padding: "10px 14px",
                 fontSize: 13,
                 outline: "none",
                 boxShadow: query ? "0 0 0 3px var(--ring)" : "none",
@@ -165,14 +178,21 @@ export default function TrainerClientsPage() {
         {loading ? (
           <p style={{ fontSize: 14, opacity: 0.9 }}>Loading trainees…</p>
         ) : trainees.length === 0 ? (
-          <p style={{ fontSize: 14, opacity: 0.9 }}>
-            No trainees registered yet.
-          </p>
+          <div className="t-card" style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 18, fontWeight: 800 }}>No trainees yet</div>
+            <p style={{ fontSize: 14, opacity: 0.9, marginTop: 6 }}>Share your sign-up link to get started.</p>
+            <div style={{ marginTop: 10 }}>
+              <Link href="/trainee/register" className="t-btn t-btn--primary" style={{ textDecoration: "none" }}>
+                Invite trainee
+              </Link>
+            </div>
+          </div>
         ) : (
           <table
             style={{
               width: "100%",
-              borderCollapse: "collapse",
+              borderCollapse: "separate",
+              borderSpacing: 0,
               fontSize: 14,
             }}
           >
@@ -181,7 +201,7 @@ export default function TrainerClientsPage() {
                 <th
                   style={{
                     textAlign: "left",
-                    padding: "8px 4px",
+                    padding: "10px 8px",
                     borderBottom: "1px solid var(--cardBorder)",
                     position: "sticky",
                     top: 0,
@@ -198,7 +218,7 @@ export default function TrainerClientsPage() {
                 <th
                   style={{
                     textAlign: "left",
-                    padding: "8px 4px",
+                    padding: "10px 8px",
                     borderBottom: "1px solid var(--cardBorder)",
                     position: "sticky",
                     top: 0,
@@ -214,7 +234,7 @@ export default function TrainerClientsPage() {
                 <th
                   style={{
                     textAlign: "left",
-                    padding: "8px 4px",
+                    padding: "10px 8px",
                     borderBottom: "1px solid var(--cardBorder)",
                     position: "sticky",
                     top: 0,
@@ -230,7 +250,7 @@ export default function TrainerClientsPage() {
                 <th
                   style={{
                     textAlign: "left",
-                    padding: "8px 4px",
+                    padding: "10px 8px",
                     borderBottom: "1px solid var(--cardBorder)",
                     position: "sticky",
                     top: 0,
@@ -246,11 +266,11 @@ export default function TrainerClientsPage() {
                 <tr
                   key={t.id}
                   style={{
-                    background: idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)",
+                    background: idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.03)",
                     transition: "background 160ms ease",
                   }}
                 >
-                  <td style={{ padding: "8px 4px" }}>
+                  <td style={{ padding: "10px 8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div
                         aria-hidden
@@ -263,7 +283,7 @@ export default function TrainerClientsPage() {
                           fontSize: 12,
                           fontWeight: 800,
                           color: "#e6ebff",
-                          background: "#1a2133",
+                          background: "linear-gradient(180deg, #1a2133, #111827)",
                           border: "1px solid var(--cardBorder)",
                         }}
                       >
@@ -272,18 +292,20 @@ export default function TrainerClientsPage() {
                       <div style={{ fontWeight: 700 }}>{t.full_name}</div>
                     </div>
                   </td>
-                  <td style={{ padding: "8px 4px", opacity: 0.9 }}>{t.email ?? "—"}</td>
-                  <td style={{ padding: "8px 4px", opacity: 0.9 }}>{fmtDate(t.created_at)}</td>
-                  <td style={{ padding: "8px 4px" }}>
+                  <td style={{ padding: "10px 8px", opacity: 0.9 }}>{t.email ?? "—"}</td>
+                  <td style={{ padding: "10px 8px", opacity: 0.9 }}>{fmtDate(t.created_at)}</td>
+                  <td style={{ padding: "10px 8px" }}>
                     <Link
                       href={`/trainee/today?tid=${t.id}&mode=trainer`}
                       style={{
                         fontSize: 13,
-                        padding: "4px 8px",
-                        borderRadius: 999,
+                        padding: "6px 10px",
+                        borderRadius: 10,
                         border: "1px solid var(--cardBorder)",
                         textDecoration: "none",
-                        background: "#111827",
+                        background: "linear-gradient(180deg, #2a3c66, #1f2937)",
+                        color: "#e6ebff",
+                        boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
                       }}
                     >
                       Open plan

@@ -497,6 +497,15 @@ function PaywallOverlay() {
           <div style={{ marginTop: 8, fontSize: 14, opacity: 0.85 }}>
             Unlock the full Progress dashboard — coming soon.
           </div>
+          <div style={{ marginTop: 14 }}>
+            <a
+              href="/contact"
+              className="t-btn t-btn--primary"
+              style={{ textDecoration: "none" }}
+            >
+              Contact Us
+            </a>
+          </div>
         </div>
       </div>
     </div>
