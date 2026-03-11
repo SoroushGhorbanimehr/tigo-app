@@ -10,11 +10,15 @@ export async function signUpTrainee(
   email: string,
   password: string
 ): Promise<SignUpResult> {
+  const emailRedirectTo =
+    typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { full_name: fullName },
+      emailRedirectTo,
     },
   });
 
@@ -62,4 +66,3 @@ export async function getCurrentUserId(): Promise<string | null> {
 export async function signOut() {
   await supabase.auth.signOut();
 }
-
