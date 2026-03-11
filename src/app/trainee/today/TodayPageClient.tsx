@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getDailyPlan, upsertDailyPlan } from "@/lib/dailyPlanRepo";
 import { getTraineeById } from "@/lib/traineeRepo";
 import { renderMarkdown } from "@/lib/markdown";
+import { getCurrentUserId } from "@/lib/authRepo";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -61,10 +62,28 @@ export default function TodayPageClient() {
   const today = useMemo(() => new Date(), []);
   const searchParams = useSearchParams();
 
-  const traineeId = searchParams.get("tid") ?? "self";
+  const urlTraineeId = searchParams.get("tid");
   const mode = searchParams.get("mode") ?? "trainee";
   const isTrainer = mode === "trainer";
   const [traineeName, setTraineeName] = useState<string | null>(null);
+  const [traineeId, setTraineeId] = useState<string | null>(null);
+
+  // Resolve effective traineeId (auth user or impersonated)
+  useEffect(() => {
+    let cancelled = false;
+    async function resolveId() {
+      if (isTrainer && urlTraineeId) {
+        setTraineeId(urlTraineeId);
+        return;
+      }
+      const uid = await getCurrentUserId();
+      if (!cancelled) setTraineeId(uid);
+    }
+    resolveId();
+    return () => {
+      cancelled = true;
+    };
+  }, [isTrainer, urlTraineeId]);
 
   // Calendar state
   const [cursor, setCursor] = useState(() => {
@@ -101,7 +120,7 @@ export default function TodayPageClient() {
     let cancelled = false;
     async function loadName() {
       if (isTrainer) return;
-      if (!traineeId || traineeId === "self") return;
+      if (!traineeId) return;
       const t = await getTraineeById(traineeId);
       if (!cancelled) setTraineeName(t?.full_name ?? null);
     }
@@ -114,7 +133,7 @@ export default function TodayPageClient() {
   useEffect(() => {
     let cancelled = false;
     setLoadingPlan(true);
-
+    if (!traineeId) return;
     getDailyPlan(traineeId, selected)
       .then((p) => {
         if (cancelled) return;
@@ -248,7 +267,7 @@ export default function TodayPageClient() {
     setSaveStatus("saving");
     try {
       await upsertDailyPlan({
-        trainee_id: traineeId,
+        trainee_id: traineeId!,
         date: selected,
         coach_note: plan.coach_note,
         program: plan.program,

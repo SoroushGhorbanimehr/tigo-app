@@ -4,6 +4,9 @@
 import "./trainee.css";
 import Link from "next/link";
 import { Suspense } from "react";
+import AuthGuardClient from "./AuthGuardClient";
+import { useRouter } from "next/navigation";
+import { signOut } from "@/lib/authRepo";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
@@ -12,7 +15,11 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
 
   return (
     <main className="t-shell">
-      <section className="t-container">{children}</section>
+      <Suspense fallback={null}>
+        <AuthGuardClient>
+          <section className="t-container">{children}</section>
+        </AuthGuardClient>
+      </Suspense>
 
       {!hideNav && (
         <Suspense fallback={null}>
@@ -25,6 +32,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
 
 function BottomNav({ pathname }: { pathname: string }) {
   const sp = useSearchParams();
+  const router = useRouter();
   const mode = sp.get("mode"); // "trainer" or null
   const keepMode = mode === "trainer" ? "?mode=trainer" : "";
 
@@ -51,6 +59,16 @@ function BottomNav({ pathname }: { pathname: string }) {
             </Link>
           );
         })}
+        <button
+          className="t-tab"
+          onClick={async () => {
+            await signOut();
+            router.replace("/trainee/login");
+          }}
+          style={{ marginLeft: 8 }}
+        >
+          Sign out
+        </button>
       </div>
     </nav>
   );

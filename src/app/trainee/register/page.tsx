@@ -2,30 +2,50 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { registerTrainee } from "@/lib/traineeRepo";
+import { signUpTrainee } from "@/lib/authRepo";
 
 export default function TraineeRegisterPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
+  const [status, setStatus] = useState<
+    | "idle"
+    | "submitting"
+    | "error"
+    | "confirmation"
+  >("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!fullName.trim() || !password.trim()) return;
+    if (!fullName.trim() || !password.trim() || !email.trim()) {
+      setErrorMsg("Email, full name and password are required");
+      setStatus("error");
+      return;
+    }
 
     setStatus("submitting");
     setErrorMsg("");
 
     try {
-      const trainee = await registerTrainee(
+      const result = await signUpTrainee(
         fullName.trim(),
         email.trim(),
         password.trim()
       );
-      router.push(`/trainee/today?tid=${trainee.id}`);
+
+      if (result.emailConfirmationRequired) {
+        setStatus("confirmation");
+        return;
+      }
+
+      if (result.userId) {
+        router.push(`/trainee/today`);
+      } else {
+        setStatus("error");
+        setErrorMsg("Sign up succeeded but no user ID returned");
+      }
     } catch (err: unknown) {
       setStatus("error");
       if (err instanceof Error) {
@@ -33,9 +53,7 @@ export default function TraineeRegisterPage() {
       } else {
         setErrorMsg("Failed to register trainee");
       }
-    } finally {
-      setStatus("idle");
-    }
+    } finally {}
   }
 
   return (
@@ -63,11 +81,12 @@ export default function TraineeRegisterPage() {
           </label>
 
           <label style={{ display: "grid", gap: 4 }}>
-            <span>Email (optional)</span>
+            <span>Email *</span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
               style={{
                 padding: 8,
                 borderRadius: 8,
@@ -113,6 +132,11 @@ export default function TraineeRegisterPage() {
 
           {status === "error" && (
             <p style={{ color: "#f97373", fontSize: 13 }}>{errorMsg}</p>
+          )}
+          {status === "confirmation" && (
+            <p style={{ color: "#60a5fa", fontSize: 13 }}>
+              Check your email to confirm your account, then return to sign in.
+            </p>
           )}
         </form>
       </div>

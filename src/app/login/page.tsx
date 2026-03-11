@@ -4,20 +4,9 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import type { Trainee } from "@/lib/traineeRepo";
 
 const TRAINER_USERNAME = "tigo";
 const TRAINER_PASSWORD = "tigo";
-
-async function sha256Hex(input: string): Promise<string> {
-  const enc = new TextEncoder();
-  const data = enc.encode(input);
-  const hashBuf = await crypto.subtle.digest("SHA-256", data);
-  const bytes = new Uint8Array(hashBuf);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 export default function UnifiedLoginPage() {
   const router = useRouter();
@@ -46,25 +35,19 @@ export default function UnifiedLoginPage() {
         return;
       }
 
-      // Trainee login via Supabase by email
-      const hashed = await sha256Hex(pass);
-      const { data, error } = await supabase
-        .from("trainees")
-        .select("*")
-        .eq("email", id)
-        .in("password", [pass, hashed])
-        .maybeSingle();
-
+      // Trainee login via Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: id,
+        password: pass,
+      });
       if (error) throw error;
-      if (!data) {
+      if (!data.user) {
         setStatus("error");
         setErrorMsg("Invalid credentials");
         return;
       }
-
-      const trainee = data as Trainee;
-      router.push(`/trainee/today?tid=${trainee.id}`);
-    } catch (err) {
+      router.push(`/trainee/today`);
+    } catch {
       setStatus("error");
       setErrorMsg("Login failed");
     } finally {
@@ -124,4 +107,3 @@ export default function UnifiedLoginPage() {
     </div>
   );
 }
-

@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import type { Trainee } from "@/lib/traineeRepo";
 
 export default function TraineeLoginPage() {
   const router = useRouter();
@@ -18,33 +17,19 @@ export default function TraineeLoginPage() {
     setErrorMsg("");
 
     try {
-      // Backward-compatible login: accept either plaintext or SHA-256 hashed passwords
-      const plain = password.trim();
-      const enc = new TextEncoder();
-      const bytes = enc.encode(plain);
-      const buf = await crypto.subtle.digest("SHA-256", bytes);
-      const hash = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-
-      const { data, error } = await supabase
-        .from("trainees")
-        .select("*")
-        .eq("email", email.trim())
-        // Match rows where password is either the plaintext (old) or the hash (new)
-        .in("password", [plain, hash])
-        .maybeSingle();
-
-      if (error) {
-        console.error("Trainee login error", error);
-        throw error;
-      }
-      if (!data) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+      if (error) throw error;
+      const user = data.user;
+      if (!user) {
         setStatus("error");
         setErrorMsg("Invalid email or password");
         return;
       }
 
-      const trainee = data as Trainee;
-      router.push(`/trainee/today?tid=${trainee.id}`);
+      router.push(`/trainee/today`);
     } catch {
       setStatus("error");
       setErrorMsg("Login failed");
