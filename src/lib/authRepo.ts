@@ -66,3 +66,24 @@ export async function getCurrentUserId(): Promise<string | null> {
 export async function signOut() {
   await supabase.auth.signOut();
 }
+
+export async function ensureTraineeProfile(opts?: { fullName?: string; email?: string }) {
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user) return;
+
+  const fullName = opts?.fullName ?? (user.user_metadata?.full_name as string | undefined) ?? "Trainee";
+  const email = opts?.email ?? user.email ?? null;
+
+  await supabase
+    .from("trainees")
+    .upsert(
+      {
+        id: user.id,
+        full_name: fullName,
+        email,
+        password: null,
+      },
+      { onConflict: "id" }
+    );
+}

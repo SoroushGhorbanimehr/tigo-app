@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { ensureTraineeProfile } from "@/lib/authRepo";
 
 type Phase = "request" | "verify";
 
@@ -49,6 +50,8 @@ export default function TraineeOtpPage() {
       });
       if (error) throw error;
       if (!data.user) throw new Error("Invalid code");
+      // Ensure a profile row exists for listing
+      await ensureTraineeProfile({ email: email.trim() });
       router.replace("/trainee/today");
     } catch (err) {
       setStatus("error");
@@ -141,4 +144,3 @@ export default function TraineeOtpPage() {
     </div>
   );
 }
-

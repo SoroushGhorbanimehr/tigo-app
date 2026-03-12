@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { ensureTraineeProfile } from "@/lib/authRepo";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -28,6 +29,8 @@ export default function AuthCallbackPage() {
           });
           if (error) throw error;
         }
+        // After session is set, ensure profile row exists
+        await ensureTraineeProfile();
       } catch {
         // Ignore; we'll fall through to login
       } finally {
@@ -42,4 +45,3 @@ export default function AuthCallbackPage() {
 
   return null;
 }
-
