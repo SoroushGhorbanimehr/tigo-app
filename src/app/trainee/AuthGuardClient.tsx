@@ -11,7 +11,10 @@ export default function AuthGuardClient({ children }: { children: React.ReactNod
   const sp = useSearchParams();
   const mode = sp.get("mode");
 
-  const isPublic = pathname === "/trainee/login" || pathname === "/trainee/register";
+  const isPublic =
+    pathname === "/trainee/login" ||
+    pathname === "/trainee/register" ||
+    pathname === "/trainee/otp";
 
   useEffect(() => {
     let ignore = false;

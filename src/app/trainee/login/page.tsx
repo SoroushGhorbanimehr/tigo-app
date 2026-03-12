@@ -68,6 +68,10 @@ export default function TraineeLoginPage() {
             <p style={{ color: "var(--danger)", fontSize: 13 }}>{errorMsg}</p>
           )}
         </form>
+
+        <p style={{ marginTop: 12, fontSize: 14, opacity: 0.9 }}>
+          Prefer a code? <a href="/trainee/otp" className="t-link">Sign in with code</a>
+        </p>
       </div>
     </div>
   );
